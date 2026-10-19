@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d2f3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FE Civil">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>FE Civil Exam Simulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: computer-based-test shell — fixed exam bar, single question pane, side drawer for reference + floating calculator; Arabic coaching views around it */
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --surface2:#f4f6f8; --ink:#16212c; --muted:#5a6977; --line:#cfd7df;
+  --accent:#0d6a75; --accent-ink:#ffffff; --accent-soft:#dcf0f2;
+  --bar:#1d2f3f; --bar-ink:#e8eef3;
+  --flag:#b8730c; --flag-soft:#fbefd9; --ok:#2b7a4b; --ok-soft:#e1f2e7; --bad:#b03535; --bad-soft:#f8e2e2;
+  --sel:#d6ebee;
+  --f-ui:"IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10171e; --surface:#18222c; --surface2:#1e2a35; --ink:#e3eaf0; --muted:#94a4b2; --line:#2e3d4a;
+  --accent:#4fb3bf; --accent-ink:#0b1a1f; --accent-soft:#16343a;
+  --bar:#0b1117; --bar-ink:#dfe7ee;
+  --flag:#e2a445; --flag-soft:#3a2c14; --ok:#5cc187; --ok-soft:#15301f; --bad:#ec7a7a; --bad-soft:#3a1a1a; --sel:#1d3c42;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10171e; --surface:#18222c; --surface2:#1e2a35; --ink:#e3eaf0; --muted:#94a4b2; --line:#2e3d4a;
+  --accent:#4fb3bf; --accent-ink:#0b1a1f; --accent-soft:#16343a;
+  --bar:#0b1117; --bar-ink:#dfe7ee;
+  --flag:#e2a445; --flag-soft:#3a2c14; --ok:#5cc187; --ok-soft:#15301f; --bad:#ec7a7a; --bad-soft:#3a1a1a; --sel:#1d3c42;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.6}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ltr{direction:ltr;text-align:left}
+.rtl{direction:rtl;text-align:right}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.3}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 16px;border-radius:4px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.warn{border-color:var(--bad);color:var(--bad)}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.label{font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.muted{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12.5px;border:1px solid var(--line);background:var(--surface2)}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.pill.flag{background:var(--flag-soft);color:var(--flag);border-color:transparent}
+
+/* ---------- COACH (RTL) ---------- */
+.mast{background:var(--bar);color:var(--bar-ink)}
+.mast .wrap{padding-block:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.mast h1{font-size:24px;font-weight:700}
+.mast p{margin:4px 0 0;opacity:.8;font-size:14px}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
+.nav button{background:transparent;border:1px solid rgba(255,255,255,.22);color:var(--bar-ink);padding:6px 14px;border-radius:4px}
+.nav button[aria-current="true"]{background:var(--bar-ink);color:var(--bar)}
+main.coach{padding-block:24px 48px;display:grid;gap:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px;display:grid;gap:14px;min-width:0;align-content:start}
+.panel h2{font-size:18px}
+.field{display:grid;gap:6px}
+.field select,.field input{background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface2);padding:4px 10px;border-radius:999px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface2);border-radius:4px;padding:12px 14px}
+.kpi b{display:block;font-family:var(--f-mono);font-size:22px;font-weight:600}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);border-inline-start:3px solid var(--line);padding-inline-start:10px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fact{border:1px solid var(--line);border-radius:4px;padding:10px 12px}
+.fact b{display:block;font-family:var(--f-mono);font-size:18px}
+.fact span{font-size:12.5px;color:var(--muted)}
+.check{margin:0;padding-inline-start:20px;display:grid;gap:4px;font-size:14px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:start;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;background:var(--accent)}
+
+/* ---------- EXAM SHELL (LTR, CBT style) ---------- */
+#exam{height:100%;display:flex;flex-direction:column;direction:ltr}
+.xbar{background:var(--bar);color:var(--bar-ink);padding-top:env(safe-area-inset-top,0px)}
+.xbar .in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.xbar .ttl{font-weight:600;font-size:14.5px}
+.xbar .sub{font-size:12px;opacity:.75}
+.timer{font-family:var(--f-mono);font-size:18px;font-weight:600;padding:4px 12px;border:1px solid rgba(255,255,255,.25);border-radius:4px}
+.timer.low{background:var(--bad);border-color:var(--bad);color:#fff}
+.xtools{background:var(--surface);border-bottom:1px solid var(--line)}
+.xtools .in{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.xtools .qn{font-weight:600;margin-right:auto}
+.xbody{flex:1;overflow:auto;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.qcard{max-width:860px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:24px;display:grid;gap:18px;width:100%}
+.qmeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stem{font-size:16px;line-height:1.7;white-space:pre-line}
+.instr{font-size:13.5px;font-weight:600;color:var(--accent)}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:10px 14px}
+.opt:hover{border-color:var(--accent)}
+.opt .dot{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;font-weight:600;font-size:13px}
+.opt.sq .dot{border-radius:4px}
+.opt[aria-checked="true"]{background:var(--sel);border-color:var(--accent)}
+.opt[aria-checked="true"] .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)}
+.opt.right .dot{border-color:var(--ok);color:var(--ok)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt.wrong .dot{border-color:var(--bad);color:var(--bad)}
+.opt[disabled]{cursor:default}
+.opt .txt{padding-top:2px}
+.numbox{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.numbox input{width:180px;max-width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--surface2);font-family:var(--f-mono);font-size:16px}
+.xfoot{background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.xfoot .in{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.flagbtn[aria-pressed="true"]{background:var(--flag-soft);border-color:var(--flag);color:var(--flag)}
+.brk{text-align:center;justify-items:center}
+.brk .big{font-family:var(--f-mono);font-size:44px;font-weight:600}
+
+/* review grid */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.rtile{border:1px solid var(--line);background:var(--surface2);border-radius:4px;padding:8px 4px;text-align:center;font-family:var(--f-mono);font-size:14px;position:relative}
+.rtile.ans{background:var(--sel);border-color:var(--accent)}
+.rtile.flg::after{content:"";position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--flag)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid var(--line)}
+
+/* drawers */
+.drawer{position:fixed;top:0;bottom:0;right:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.15);z-index:30;display:flex;flex-direction:column;direction:ltr;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.drawer header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);gap:8px}
+.drawer .body{overflow:auto;padding:12px 16px;display:grid;gap:14px;align-content:start}
+.refsec h4{margin:0 0 6px;font-size:13.5px;color:var(--accent)}
+.refsec ul{margin:0;padding-left:16px;font-family:var(--f-mono);font-size:12.8px;line-height:1.75}
+.refsec.hit{background:var(--accent-soft);border-radius:4px;padding:8px}
+mark{background:var(--flag-soft);color:inherit}
+.calc{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));width:300px;max-width:calc(100% - 32px);background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:35;direction:ltr;padding:12px;display:grid;gap:8px}
+.calc .scr{background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:6px 10px;text-align:right;font-family:var(--f-mono)}
+.calc .scr input{border:0;background:transparent;width:100%;text-align:right;font-family:var(--f-mono);font-size:15px;padding:0}
+.calc .res{font-size:20px;font-weight:600;min-height:28px;overflow-x:auto}
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.keys button{padding:7px 0;border:1px solid var(--line);background:var(--surface2);border-radius:4px;font-family:var(--f-mono);font-size:13px}
+.keys button.op{background:var(--accent-soft)}
+.keys button.eq{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(10,18,26,.5);z-index:40;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border-radius:6px;max-width:460px;width:100%;padding:22px;display:grid;gap:14px;border:1px solid var(--line)}
+
+/* training feedback */
+.fb{border-radius:4px;padding:14px 16px;display:grid;gap:8px;direction:rtl;text-align:right}
+.fb.ok{background:var(--ok-soft)}
+.fb.bad{background:var(--bad-soft)}
+.fb .ex{white-space:pre-line;line-height:1.85}
+.hint{background:var(--flag-soft);border-radius:4px;padding:10px 14px;direction:rtl;text-align:right;font-size:14px}
+.res-q{border:1px solid var(--line);border-radius:4px;padding:12px 14px;display:grid;gap:8px;background:var(--surface)}
+details summary{cursor:pointer;color:var(--accent);font-size:14px}
+@media (prefers-reduced-motion:no-preference){.opt,.btn,.chip{transition:background .12s,border-color .12s}}
+@media (max-width:560px){.qcard{padding:16px}.stem{font-size:15px}.xbar .sub{display:none}}
+</style>
+</head>
+<body>
+
+
+<div id="app" dir="rtl">
+
+<section id="coach">
+  <header class="mast">
+    <div class="wrap">
+      <div>
+        <div class="label" style="color:inherit;opacity:.7">NCEES FE Civil · via SCE</div>
+        <h1>محاكي امتحان FE المدني</h1>
+        <p>محاكاة بنمط الاختبار المحوسب وفق مواصفات NCEES + مراجعة وتدريب موجّه</p>
+      </div>
+      <nav class="nav" aria-label="أقسام">
+        <button data-view="home" aria-current="true">الرئيسية</button>
+        <button data-view="learn">المراجعة</button>
+        <button data-view="train">التدريب</button>
+        <button data-view="stats">الأداء والأخطاء</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <main class="coach wrap" id="v-home">
+    <div class="kpis" id="homeKpis"></div>
+    <div class="panel">
+      <div><div class="label">About the exam</div><h2>امتحان NCEES FE Civil</h2></div>
+      <div class="facts">
+        <div class="fact"><b>110</b><span>سؤال</span></div>
+        <div class="fact"><b>5:20</b><span>ساعات زمن الامتحان الفعلي</span></div>
+        <div class="fact"><b>25 min</b><span>استراحة مجدولة اختيارية</span></div>
+        <div class="fact"><b>~2:55</b><span>دقيقة لكل سؤال</span></div>
+        <div class="fact"><b>SI + USCS</b><span>الوحدتان معاً</span></div>
+      </div>
+      <ul class="check">
+        <li>الموعد الكامل 6 ساعات: اتفاقية عدم إفصاح (2 د) + شرح تجريبي (8 د) + الامتحان + الاستراحة. يُعقد في مراكز Pearson VUE.</li>
+        <li>المرجع الوحيد المسموح هو <b>NCEES FE Reference Handbook</b> الإلكتروني على الشاشة. حمّل نسختك المجانية من حساب MyNCEES وتدرّب عليها من اليوم.</li>
+        <li>آلة حاسبة من القائمة المعتمدة لدى NCEES فقط. اشترِ نفس الموديل الذي ستدخل به وتدرّب عليه.</li>
+        <li>بعض الأسئلة ليست اختياراً من متعدد: "اختر كل ما ينطبق" أو إدخال رقم. المحاكي يتضمن النوعين.</li>
+        <li>NCEES لا تنشر درجة النجاح. اعتمدنا هدف 70% في المحاكاة كهامش أمان.</li>
+      </ul>
+      <p class="note" style="margin:0">المصادر: <a href="https://ncees.org/exams/fe-exam/" target="_blank" rel="noopener">NCEES FE exam</a> · <a href="https://ncees.org/wp-content/uploads/2022/09/FE-Civil-CBT-specs-1.pdf" target="_blank" rel="noopener">FE Civil specifications</a>. هذا المحاكي أداة تدريب مستقلة وغير تابع لـ NCEES.</p>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div><div class="label">Exam simulation</div><h2>محاكاة الامتحان</h2></div>
+        <p class="muted" style="margin:0">الأسئلة موزّعة على 14 موضوعاً بنفس أوزان مواصفات NCEES. في المحاكاة الكاملة: قسمان من 55 سؤالاً، استراحة 25 دقيقة بينهما، ولا يمكنك العودة للقسم الأول بعد إنهائه. لا تظهر الإجابات إلا بعد التسليم.</p>
+        <div class="field">
+          <label for="exPreset">نوع الامتحان</label>
+          <select id="exPreset">
+            <option value="mini">Mini mock — 20 سؤال / 58 دقيقة</option>
+            <option value="half" selected>Half mock — 55 سؤال / 2:40</option>
+            <option value="full">Full mock — 110 سؤال / 5:20 + استراحة</option>
+            <option value="custom">مخصص</option>
+          </select>
+        </div>
+        <div class="row" id="customRow" hidden>
+          <div class="field" style="flex:1"><label for="exN">عدد الأسئلة</label><input id="exN" type="number" min="5" max="110" value="30"></div>
+          <div class="field" style="flex:1"><label for="exMin">المدة (دقيقة)</label><input id="exMin" type="number" min="5" max="400" value="88"></div>
+        </div>
+        <div class="field">
+          <label for="exName">اسم المتقدم (يظهر في شريط الامتحان)</label>
+          <input id="exName" type="text" placeholder="Candidate name">
+        </div>
+        <div class="row"><button class="btn primary" id="startExam">ابدأ الامتحان</button></div>
+      </div>
+      <div class="panel">
+        <div><div class="label">Guided training</div><h2>التدريب الموجّه</h2></div>
+        <p class="muted" style="margin:0">سؤال واحد في كل مرة، تلميحات بثلاث درجات، تصحيح فوري مع الشرح، تصنيف نوع الخطأ، ثم سؤال مشابه لتثبيت الفكرة.</p>
+        <div class="field"><span>المواضيع</span><div class="chips" id="topicChips"></div></div>
+        <div class="field">
+          <label for="trSrc">مصدر الأسئلة</label>
+          <select id="trSrc">
+            <option value="topics">المواضيع المختارة</option>
+            <option value="due">المراجعات المستحقة اليوم</option>
+            <option value="weak">أضعف المواضيع أولاً</option>
+          </select>
+        </div>
+        <div class="row"><button class="btn primary" id="startTrain">ابدأ التدريب</button><button class="btn ghost" id="allTopics">اختر الكل</button></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- LEARN -->
+  <main class="coach wrap" id="v-learn" hidden>
+    <div class="panel">
+      <div><div class="label">Refresher</div><h2>مراجعة سريعة لمن ابتعد عن الدراسة</h2></div>
+      <p class="muted" style="margin:0">المواضيع الـ14 بترتيب مواصفات NCEES مع عدد أسئلتها في الامتحان. لكل موضوع: الأفكار والمعادلات، مثال محلول، والأخطاء الشائعة، ثم تدريب مباشر عليه. ابدأ بالرياضيات والاستاتيكا ومقاومة المواد لأن بقية المواضيع تُبنى عليها.</p>
+      <div class="chips" id="learnTabs"></div>
+    </div>
+    <div class="panel" id="learnBody"></div>
+  </main>
+
+  <!-- TRAIN -->
+  <main class="coach wrap" id="v-train" hidden>
+    <div class="row" style="justify-content:space-between">
+      <div class="row">
+        <span class="pill" id="trTopic"></span>
+        <span class="pill" id="trLevel"></span>
+        <span class="pill num" id="trClock">00:00</span>
+      </div>
+      <div class="row"><span class="muted" id="trScore"></span><button class="btn" id="trRefBtn">المعادلات</button><button class="btn" id="trCalcBtn">الآلة الحاسبة</button></div>
+    </div>
+    <div class="qcard" id="trCard"></div>
+  </main>
+
+  <!-- STATS -->
+  <main class="coach wrap" id="v-stats" hidden>
+    <div class="kpis" id="stKpis"></div>
+    <div class="panel">
+      <h2>الأداء حسب موضوعات NCEES</h2>
+      <p class="note" style="margin:0">التقييم: 5 ممتاز · 4 قوي · 3 كافٍ · 2 ضعيف · 1 حرج · 0 غير معروف (أقل من 3 محاولات). الأولوية P1–P4 تُشتق من التقييم. مؤشر الجاهزية مرجّح بعدد أسئلة كل موضوع في الامتحان.</p>
+      <div class="tbl-wrap"><table id="topicTbl"></table></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h2>مراجعات مستحقة</h2>
+        <p class="note" style="margin:0">كل سؤال أخطأت فيه يعود بعد 1 → 3 → 7 → 14 → 30 يوماً. الخطأ في إعادة الاختبار يعيد الدورة من البداية.</p>
+        <div id="dueList"></div>
+      </div>
+      <div class="panel">
+        <h2>سجل الأخطاء</h2>
+        <div class="tbl-wrap"><table id="errTbl"></table></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>نقل التقدم بين الأجهزة</h2>
+      <p class="muted" style="margin:0">التقدم محفوظ في هذا الجهاز فقط. لنقله إلى جهاز آخر أو إلى التطبيق: اضغط "نسخ التقدم"، الصق النص في الجهاز الآخر، ثم اضغط "استيراد". الاستيراد يدمج المحاولات ولا يحذف الموجود.</p>
+      <textarea id="bkText" rows="4" spellcheck="false" aria-label="نص النسخة الاحتياطية" style="width:100%;font-family:var(--f-mono);font-size:12px;direction:ltr;background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:8px;color:var(--ink)"></textarea>
+      <div class="row"><button class="btn" id="bkExport">نسخ التقدم</button><button class="btn" id="bkImport">استيراد</button><span class="muted" id="bkMsg" role="status"></span></div>
+    </div>
+    <div class="panel">
+      <h2>تصفير البيانات</h2>
+      <p class="muted" style="margin:0">البيانات محفوظة في هذا المتصفح فقط. التصفير يحذف كل المحاولات وسجل الأخطاء.</p>
+      <div class="row"><button class="btn warn" id="resetBtn">حذف كل البيانات</button><span id="resetConfirm" hidden><button class="btn warn" id="resetYes">تأكيد الحذف</button> <button class="btn" id="resetNo">إلغاء</button></span></div>
+    </div>
+  </main>
+
+  <main class="coach wrap" id="v-result" hidden></main>
+</section>
+
+<!-- ================= EXAM SHELL ================= -->
+<section id="exam" hidden>
+  <div class="xbar"><div class="in">
+    <div><div class="ttl">FE Civil — Computer-Based Practice Exam</div><div class="sub" id="xCand">Candidate</div></div>
+    <div class="row"><span class="sub" id="xSec"></span><span class="sub">Time Remaining</span><span class="timer" id="xTimer">00:00:00</span></div>
+  </div></div>
+  <div class="xtools" id="xTools"><div class="in">
+    <span class="qn" id="xQn">Question 1 of 1</span>
+    <button class="btn flagbtn" id="xFlag" aria-pressed="false">⚑ Flag for Review</button>
+    <button class="btn" id="xRef">Reference</button>
+    <button class="btn" id="xCalc">Practice Calculator</button>
+  </div></div>
+  <div class="xbody" id="xBody"></div>
+  <div class="xfoot" id="xFoot"><div class="in">
+    <button class="btn" id="xPrev">◀ Previous</button>
+    <div class="row"><button class="btn" id="xReview">Review Screen</button><button class="btn warn" id="xEnd">End Exam</button></div>
+    <button class="btn primary" id="xNext">Next ▶</button>
+  </div></div>
+</section>
+
+<aside class="drawer" id="refDrawer" hidden aria-label="Reference">
+  <header><strong>Formula Reference</strong><button class="btn" id="refClose">Close</button></header>
+  <div style="padding:10px 16px;border-bottom:1px solid var(--line);display:grid;gap:8px">
+    <input id="refSearch" type="search" placeholder="Search: e.g. Manning, buckling, Rankine" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface2)">
+    <span class="muted" style="font-size:12px">Condensed practice sheet. In the real exam you search the full NCEES FE Reference Handbook PDF — practise with it too.</span>
+  </div>
+  <div class="body" id="refBody"></div>
+</aside>
+
+<div class="calc" id="calc" hidden aria-label="Calculator">
+  <div class="row" style="justify-content:space-between"><strong style="font-size:13px">Practice calculator (DEG)</strong><button class="btn" id="calcClose" style="padding:2px 10px">×</button></div>
+  <div class="scr"><input id="calcIn" type="text" spellcheck="false" autocomplete="off" aria-label="Expression"><div class="res" id="calcOut">0</div></div>
+  <div class="keys" id="calcKeys"></div>
+  <span class="muted" style="font-size:11.5px">On exam day you use your own NCEES-approved calculator.</span>
+</div>
+
+<div class="scrim" id="modal" hidden><div class="modal" id="modalBox"></div></div>
+</div>
+
+<script>
+/* ===================== TOPICS (NCEES FE Civil specs) ===================== */
+const TOPICS={math:"Mathematics & Statistics",eth:"Ethics & Professional Practice",econ:"Engineering Economics",statics:"Statics",dyn:"Dynamics",mom:"Mechanics of Materials",mat:"Materials",fl:"Fluid Mechanics",sur:"Surveying",wre:"Water Resources & Environmental",str:"Structural Engineering",geo:"Geotechnical Engineering",tr:"Transportation Engineering",cm:"Construction Engineering"};
+const TOPIC_AR={math:"الرياضيات والإحصاء",eth:"الأخلاقيات والممارسة المهنية",econ:"الاقتصاد الهندسي",statics:"الاستاتيكا",dyn:"الديناميكا",mom:"مقاومة المواد",mat:"المواد",fl:"ميكانيكا الموائع",sur:"المساحة",wre:"الموارد المائية والبيئية",str:"الهندسة الإنشائية",geo:"الجيوتقنية",tr:"هندسة النقل",cm:"هندسة التشييد"};
+const RANGE={math:"8–12",eth:"4–6",econ:"5–8",statics:"8–12",dyn:"4–6",mom:"7–11",mat:"5–8",fl:"6–9",sur:"6–9",wre:"10–15",str:"10–15",geo:"10–15",tr:"9–14",cm:"8–12"};
+/* questions per topic in a 110-question mock — each inside the NCEES range, total 110 */
+const MOCK={math:8,eth:5,econ:6,statics:8,dyn:5,mom:7,mat:6,fl:7,sur:7,wre:11,str:11,geo:11,tr:10,cm:8};
+const ERR_TYPES=["Conceptual","Formula selection","Calculation","Unit conversion","Sign convention","Diagram/FBD","Reading/comprehension","Calculator","Time management","Careless mistake"];
+const ERR_AR={"Conceptual":"مفاهيمي","Formula selection":"اختيار المعادلة","Calculation":"حسابي","Unit conversion":"تحويل الوحدات","Sign convention":"اصطلاح الإشارات","Diagram/FBD":"الرسم / FBD","Reading/comprehension":"قراءة / فهم السؤال","Calculator":"الآلة الحاسبة","Time management":"إدارة الوقت","Careless mistake":"سهو"};
+
+/* ===================== FORMULA SHEET ===================== */
+const REF=[
+ {id:"vec",t:"Mathematics — Algebra, Geometry, Vectors",l:["Distance d = √[(x₂−x₁)² + (y₂−y₁)²]","Slope m = (y₂−y₁)/(x₂−x₁)","A·B = |A||B| cos θ = AxBx + AyBy + AzBz","Quadratic: x = [−b ± √(b² − 4ac)] / 2a","det(3×3) = a(ei − fh) − b(di − fg) + c(dh − eg)"]},
+ {id:"calc",t:"Mathematics — Calculus",l:["d/dx(xⁿ) = n xⁿ⁻¹","∫ xⁿ dx = xⁿ⁺¹/(n+1) + C","Critical point: f′(x) = 0","f″(x) > 0 → local minimum; f″(x) < 0 → local maximum"]},
+ {id:"stat",t:"Statistics",l:["Mean x̄ = Σx / n","Sample s = √[Σ(x − x̄)² / (n − 1)] ; population σ ÷ N","Z = (x − μ) / σ","CI for mean (σ known): x̄ ± z·σ/√n","z: 90% → 1.645 ; 95% → 1.96 ; 99% → 2.576","Series reliability R = R₁R₂… ; parallel R = 1 − Π(1 − Ri)","Dispersion: range, variance, std. dev., coefficient of variation = s/x̄"]},
+ {id:"eth",t:"Ethics & Professional Practice",l:["Public safety, health and welfare are paramount","Seal only work done under your responsible charge","Practise only within your competence","Disclose conflicts of interest; refuse gifts that could influence judgment","Contract elements: offer & acceptance, consideration, competent parties, lawful purpose","Professional liability: negligence; covered by errors & omissions (E&O) insurance","Licensure exists to protect the public"]},
+ {id:"econ",t:"Engineering Economics",l:["F = P (1 + i)ⁿ ; P = F (1 + i)⁻ⁿ","A/P = i(1+i)ⁿ / [(1+i)ⁿ − 1]","P/A = [(1+i)ⁿ − 1] / [i(1+i)ⁿ]","F/A = [(1+i)ⁿ − 1] / i","Straight-line depreciation D = (C − S)/n ; BV = C − jD","Break-even units = Fixed cost / (price − variable cost per unit)","B/C = annual benefits / annual costs (capital recovery + O&M)","Expected value E = Σ pᵢ xᵢ"]},
+ {id:"statics",t:"Statics — Equilibrium, Friction, Areas",l:["ΣFx = 0, ΣFy = 0, ΣM = 0","Resultant R = √(Rx² + Ry²) ; θ = tan⁻¹(Ry/Rx)","Moment M = F·d⊥ = F·r·sin θ","UDL resultant = w·L at L/2","Friction F ≤ μs N ; slips on incline when tan θ > μs","Hold on incline: P = W(sin θ − μ cos θ) ; push up: P = W(sin θ + μ cos θ)","Centroid ȳ = Σ(Ai yi)/ΣAi","Rectangle: Ic = bh³/12 ; about base = bh³/3","Parallel axis: I = Ic + A d²"]},
+ {id:"truss",t:"Statics — Trusses",l:["Method of joints: ΣFx = 0, ΣFy = 0 at each joint","Method of sections: ΣM about a point on the cut","Unloaded joint with two non-collinear members → both zero-force","Plane truss determinacy: m + r = 2j (determinate), > 2j indeterminate, < 2j unstable"]},
+ {id:"dyn",t:"Dynamics",l:["v = v₀ + a t ; s = v₀ t + ½ a t² ; v² = v₀² + 2 a s","g = 9.81 m/s² = 32.2 ft/s²","Projectile: x = vₓ t ; y = ½ g t² (launched horizontally)","ΣF = m a ; KE = ½ m v² ; PE = m g h ; ΣW = ΔKE","Power P = W/t = F·v ; 1 hp = 550 ft-lb/s = 745.7 W","Mass moment of inertia: disk ½mr² ; slender rod (center) mL²/12 ; sphere 2/5 mr²"]},
+ {id:"mom",t:"Mechanics of Materials",l:["σ = P/A ; ε = δ/L ; E = σ/ε ; δ = PL/(AE)","Poisson: ε_lat = −ν ε_axial","Thermal: δ = α L ΔT ; restrained σ = E α ΔT","Bending σ = Mc/I = M/S ; rectangle S = bh²/6","Shear τ = VQ/(Ib) ; rectangle τmax = 1.5 V/A","Torsion τ = Tr/J ; solid shaft τ = 16T/(πd³)","Mohr: σ₁,₂ = (σx+σy)/2 ± √[((σx−σy)/2)² + τxy²]","Steel E = 200 GPa = 29,000 ksi"]},
+ {id:"beam",t:"Beam & Column Formulas",l:["Simple span UDL: Mmax = wL²/8 ; Vmax = wL/2 ; δ = 5wL⁴/(384EI)","Simple span midspan P: M = PL/4 ; δ = PL³/(48EI)","Cantilever: tip P → M = PL ; UDL → M = wL²/2","Fixed-fixed UDL: Mend = wL²/12 ; Mmid = wL²/24","Beam determinacy: r − 3 (r = number of reactions)","Euler Pcr = π²EI/(KL)² ; slenderness KL/r","K: pinned-pinned 1.0 ; fixed-free 2.0 ; fixed-pinned 0.7 ; fixed-fixed 0.5","Tributary area of interior column = (bay x)(bay y)"]},
+ {id:"rc",t:"Reinforced Concrete (ACI 318)",l:["a = As fy / (0.85 f′c b)","Mn = As fy (d − a/2) ; φ = 0.90 if εt ≥ 0.005","c = a/β₁ ; β₁ = 0.85 for f′c ≤ 28 MPa (4000 psi)","εt = 0.003 (d − c)/c","Vc = 0.17 λ √f′c bw d (SI) ; φ shear = 0.75","Vs = Av fyt d / s","Load combos (ASCE 7): 1.4D ; 1.2D + 1.6L"]},
+ {id:"steel",t:"Steel (AISC 360, LRFD)",l:["Tension yielding: φPn = 0.90 Fy Ag","Tension rupture: φPn = 0.75 Fu Ae ; Ae = U An","Flexure (compact, braced): φMn = 0.90 Fy Zx","Compression: slenderness KL/r ≤ 200 recommended"]},
+ {id:"mat",t:"Materials",l:["w/c = mass of water / mass of cement","Absolute volume = mass / (SG × ρw) ; ρw = 1000 kg/m³","Absorption = (M_SSD − M_OD)/M_OD × 100%","Asphalt air voids Va = (1 − Gmb/Gmm) × 100%","Moisture content (wood, soil) = (M_wet − M_dry)/M_dry","% elongation = (L_f − L₀)/L₀ × 100%","f′c = P/A ; standard cylinder 150 × 300 mm (6 × 12 in)"]},
+ {id:"fl",t:"Fluid Mechanics",l:["p = γ h ; γw = 9.81 kN/m³ = 62.4 lb/ft³ ; 1 psi = 144 psf","Force on plane surface F = γ hc A ; vertical rectangle from surface: acts at 2H/3","Buoyancy: F_B = γ V_submerged","Continuity Q = A₁V₁ = A₂V₂","Bernoulli p/γ + V²/2g + z = const","Momentum F = ρQ(V₂ − V₁)","Reynolds Re = VD/ν ; laminar < 2000 ; turbulent > ~4000","Darcy–Weisbach hf = f (L/D) V²/(2g)"]},
+ {id:"sur",t:"Surveying",l:["HI = Elev + BS ; Elev = HI − FS","Latitude = L cos(Az) ; Departure = L sin(Az)","Bearing S θ E → Az = 180° − θ ; N θ W → Az = 360° − θ","Linear misclosure = √(ΣLat² + ΣDep²) ; precision = 1 : (perimeter/misclosure)","Area by coordinates: A = ½|Σ(xᵢ yᵢ₊₁ − xᵢ₊₁ yᵢ)|","Average end area: V = L (A₁ + A₂)/2","Horizontal distance H = S cos α","Tape temperature correction C = α (T − Ts) L ; steel α = 6.45×10⁻⁶ /°F"]},
+ {id:"wre",t:"Water Resources — Hydrology & Hydraulics",l:["Rational: Q = CiA (cfs, in/hr, acres) ; SI: Q(m³/s) = C i(mm/h) A(ha)/360","SCS: S = 1000/CN − 10 ; Q = (P − 0.2S)²/(P + 0.8S) (in)","Manning (SI) Q = (1/n) A R^(2/3) S^(1/2) ; US uses 1.49/n ; R = A/P","Rectangular channel: yc = (q²/g)^(1/3) ; q = Q/b","Froude Fr = V/√(g y) ; > 1 supercritical","Groundwater Darcy: Q = K i A","Pump power = γ Q H / η ; US hp = γQH/(550 η)"]},
+ {id:"env",t:"Environmental",l:["BOD = (DOi − DOf)/P ; P = sample vol/bottle vol","Detention time θ = V/Q ; overflow rate = Q/As","Mass loading (kg/d) = C (mg/L) × Q (m³/d) / 1000","F/M = Q S₀ / (V X)","Hardness as CaCO₃ = mg/L × (50 / equivalent weight) ; Ca eq. wt = 20","Conventional treatment: coagulation → flocculation → sedimentation → filtration → disinfection"]},
+ {id:"geo",t:"Geotechnical",l:["S e = w Gs ; n = e/(1 + e) ; γd = γ/(1 + w) = Gs γw/(1 + e)","γw = 9.81 kN/m³ = 62.4 pcf","USCS: fine-grained if ≥ 50% passes No. 200 ; A-line PI = 0.73(LL − 20)","Relative compaction RC = γd,field / γd,max","σ′ = σ − u","Mohr–Coulomb τ = c′ + σ′ tan φ′","Ka = tan²(45 − φ/2) ; Kp = 1/Ka ; K₀ = 1 − sin φ ; Pa = ½ Ka γ H²","NC clay S = Cc H/(1 + e₀) log[(σ′₀ + Δσ)/σ′₀]","t = Tv Hdr²/cv ; Tv(50%) = 0.197 ; Tv(90%) = 0.848","Strip footing qult = cNc + qNq + ½γBNγ","Infinite slope (dry sand) FS = tan φ / tan β"]},
+ {id:"tr",t:"Transportation",l:["SSD (SI) = 0.278 V t + 0.039 V²/a (V km/h, a m/s²)","SSD (US) = 1.47 V t + 1.075 V²/a (V mph, a ft/s²)","Horizontal curve: L = πRΔ/180 ; T = R tan(Δ/2)","Superelevation: e + f = V²/(127R) (SI) ; = V²/(15R) (US)","Vertical curve high/low point: x = g₁L/(g₁ − g₂)","q = k·v ; headway h = 3600/q (s) ; PHF = V/(4 V15)","Greenshields: q_max = v_f k_j / 4","Yellow interval Y = t + V/(2a ± 2Gg)","ESAL (4th-power approx.) = (axle load / 18 kip)⁴","Four-step model: generation → distribution → mode choice → assignment"]},
+ {id:"cm",t:"Construction",l:["Production = bucket vol × cycles/h × efficiency × other factors","50-minute hour efficiency = 50/60","Loose volume = bank volume × (1 + swell)","1 yd³ = 27 ft³","CPM: ES/EF forward, LS/LF backward ; Total float = LS − ES","Free float = ES(successor) − EF(activity)","Earned value: CV = EV − AC ; SV = EV − PV ; CPI = EV/AC ; SPI = EV/PV","OSHA: protective system required in trenches ≥ 5 ft (1.5 m) deep unless stable rock","Lump-sum contracts put cost risk on the contractor"]}
+];
+
+/* ===================== QUESTION BANK =====================
+ type: (default) single answer, a = index | "multi": a = array of indices | "num": a = value, tol = relative tolerance */
+const Q=[
+{"id":"M1","t":"math","lv":2,"s":"What is the angle between vectors A = 3i + 4j and B = 4i + 3j?","o":["16.3°","36.9°","53.1°","73.7°"],"a":0,"r":"vec","h":["استخدم الضرب النقطي (Dot Product).","cos θ = A·B / (|A||B|)","A·B = 24 ، و |A| = |B| = 5"],"e":"A·B = 3×4 + 4×3 = 24\n|A| = |B| = 5\ncos θ = 24/25 = 0.96 → θ = 16.3°\nالمشتت 36.9° هو زاوية B مع المحور x، و53.1° زاوية A مع المحور x."},
+{"id":"M2","t":"math","lv":2,"s":"For f(x) = x³ − 6x² + 9x + 2, the local minimum occurs at x =","o":["1","2","3","4"],"a":2,"r":"calc","h":["ابحث عن النقاط الحرجة.","f′(x) = 3x² − 12x + 9 = 0","استخدم f″(x) لتمييز القيمة الصغرى من العظمى."],"e":"f′ = 3(x−1)(x−3) → x = 1, 3\nf″ = 6x − 12 → f″(3) = +6 > 0 → صغرى محلية عند x = 3\n(x = 1 عظمى محلية لأن f″(1) = −6)."},
+{"id":"M3","t":"math","lv":1,"s":"Evaluate ∫₀² (3x² + 2x) dx.","o":["4","8","10","12"],"a":3,"r":"calc","h":["كامل كل حد على حدة.","التكامل غير المحدد = x³ + x²","عوّض الحدين 2 و 0."],"e":"∫(3x² + 2x)dx = x³ + x²\n[8 + 4] − [0] = 12"},
+{"id":"M4","t":"math","lv":1,"s":"If 2x + y = 7 and x − y = 2, then x + y equals:","o":["3","4","5","6"],"a":1,"r":"vec","h":["اجمع المعادلتين لحذف y.","3x = 9","x = 3 ثم عوّض لإيجاد y."],"e":"بالجمع: 3x = 9 → x = 3\ny = x − 2 = 1\nx + y = 4"},
+{"id":"M5","t":"math","lv":2,"s":"The determinant of the matrix\n| 2  1  0 |\n| 1  3  1 |\n| 0  1  2 |\nis:","o":["6","8","10","12"],"a":1,"r":"vec","h":["فك المحدد على الصف الأول.","2(3·2 − 1·1) − 1(1·2 − 1·0) + 0","انتبه لإشارة الحد الثاني (سالبة)."],"e":"= 2(6 − 1) − 1(2 − 0) + 0 = 10 − 2 = 8\nنسيان الإشارة السالبة للحد الأوسط يعطي 12."},
+{"id":"S1","t":"math","lv":2,"s":"For the sample data 4, 6, 8, 10, 12, the sample standard deviation is most nearly:","o":["2.83","3.16","4.00","10.0"],"a":1,"r":"stat","h":["احسب المتوسط أولاً.","مجموع مربعات الانحرافات = 40","العينة (Sample) تقسم على n − 1 وليس n."],"e":"x̄ = 8 ؛ Σ(x − x̄)² = 40\ns = √(40/4) = √10 = 3.16\n2.83 هو انحراف المجتمع (÷5)، و10 هو التباين (Variance)."},
+{"id":"S2","t":"math","lv":1,"s":"Two independent components with reliabilities 0.90 and 0.80 are connected in series. The system reliability is:","o":["0.72","0.80","0.85","0.98"],"a":0,"r":"stat","h":["التوالي يعني أن النظام يعمل فقط إذا عمل الجزءان معاً.","اضرب الاحتماليتين.","0.98 هو جواب التوازي."],"e":"R = 0.90 × 0.80 = 0.72\nالتوازي: 1 − (0.1)(0.2) = 0.98"},
+{"id":"M6","t":"math","lv":1,"s":"The distance between points P(2, −1) and Q(8, 7) is:","o":["8","10","12","14"],"a":1,"r":"vec","h":["قانون المسافة بين نقطتين.","Δx = 6 ، Δy = 8","d = √(Δx² + Δy²)"],"e":"d = √(6² + 8²) = √100 = 10\n14 هو مجموع Δx + Δy (خطأ شائع)."},
+{"id":"M7","t":"math","lv":2,"s":"Sixteen concrete cylinders give a mean strength of 30.0 MPa. The population standard deviation is known to be 4.0 MPa. The 95% confidence interval for the mean strength is:","o":["28.04 to 31.96 MPa","29.51 to 30.49 MPa","22.16 to 37.84 MPa","28.36 to 31.64 MPa"],"a":0,"r":"stat","h":["فترة الثقة للمتوسط مع σ معلومة.","x̄ ± z σ/√n","z(95%) = 1.96 ، √16 = 4"],"e":"x̄ ± 1.96 × 4/√16 = 30 ± 1.96\n→ 28.04 إلى 31.96 MPa\n22.16–37.84 بدون القسمة على √n ، و28.36–31.64 باستخدام z = 1.645 (90%)."},
+{"id":"M8","t":"math","lv":1,"type":"num","s":"For f(x) = 4x³ − 2x, enter the value of f′(2).","unit":"","a":46,"tol":0.001,"r":"calc","h":["اشتق كل حد.","f′(x) = 12x² − 2","عوّض x = 2."],"e":"f′(x) = 12x² − 2\nf′(2) = 48 − 2 = 46"},
+{"id":"M9","t":"math","lv":1,"type":"multi","s":"Which of the following are measures of dispersion (spread) of a data set? Select all that apply.","o":["Standard deviation","Median","Variance","Range","Mode","Coefficient of variation"],"a":[0,2,3,5],"r":"stat","h":["التشتت = مدى انتشار البيانات حول المركز.","المتوسط والوسيط والمنوال مقاييس نزعة مركزية.","أربعة خيارات صحيحة."],"e":"مقاييس التشتت: الانحراف المعياري، التباين، المدى، معامل الاختلاف.\nالوسيط والمنوال مقاييس نزعة مركزية (Central tendency)."},
+{"id":"ET1","t":"eth","lv":1,"s":"An engineer's employer asks them to sign and seal drawings prepared by an unlicensed designer who was not under the engineer's supervision. The engineer should:","o":["Sign, since the employer accepts responsibility","Sign after a quick check of the calculations","Sign but add a disclaimer note","Refuse to sign drawings not prepared under their responsible charge"],"a":3,"r":"eth","h":["ما شرط الختم الهندسي؟","الختم = مسؤولية مهنية شخصية.","هل أُعدّت الرسومات تحت إشرافه المباشر؟"],"e":"لا يجوز ختم أعمال لم تُعدّ تحت الإشراف المسؤول (Responsible Charge). المراجعة السريعة لا تغيّر ذلك."},
+{"id":"ET2","t":"eth","lv":1,"s":"An engineer is asked by a city to review a development proposal submitted by a company in which the engineer owns significant stock. The engineer should:","o":["Proceed, since the shares are a passive investment","Sell the shares after completing the review","Ask a junior colleague to sign the review instead","Disclose the conflict to the city and decline unless all parties consent after disclosure"],"a":3,"r":"eth","h":["هذا تضارب مصالح (Conflict of interest).","الحل يبدأ بالإفصاح.","لا يكفي نقل التوقيع لشخص آخر."],"e":"تضارب المصالح يجب الإفصاح عنه لكل الأطراف، والامتناع عن العمل ما لم يوافقوا بعد العلم."},
+{"id":"ET3","t":"eth","lv":1,"s":"The primary purpose of engineering licensure is to:","o":["Protect the income of licensed engineers","Standardize consulting fees","Allow engineers to practise in any country","Protect public health, safety, and welfare"],"a":3,"r":"eth","h":["لماذا تنظم الدولة المهنة أصلاً؟","المستفيد الأول ليس المهندس.","فكّر في الجمهور."],"e":"الترخيص المهني وُجد لحماية صحة الجمهور وسلامته ورفاهيته."},
+{"id":"ET4","t":"eth","lv":2,"type":"multi","s":"Which of the following are essential elements of a legally enforceable contract? Select all that apply.","o":["Offer and acceptance","Consideration","Competent (legally capable) parties","Lawful purpose","Notarization","A written document in every case"],"a":[0,1,2,3],"r":"eth","h":["العقد يحتاج اتفاقاً ومقابلاً.","الأطراف والغرض لهما شروط.","التوثيق والكتابة ليسا شرطين عامين."],"e":"عناصر العقد: الإيجاب والقبول، المقابل (Consideration)، أهلية الأطراف، مشروعية الغرض.\nالتوثيق والكتابة مطلوبان فقط في حالات خاصة."},
+{"id":"ET5","t":"eth","lv":2,"s":"During a site visit, an engineer finds that the contractor installed a lower rebar grade than specified. The contractor promises to compensate later and asks the engineer to say nothing. The engineer should:","o":["Accept, since the contractor will compensate","Correct the design to match the installed rebar without telling anyone","Report it to the news media","Report it to the owner and require correction before the work is concealed"],"a":3,"r":"eth","h":["هل يتعلق الأمر بالسلامة؟","صاحب القرار هو المالك (Owner).","التوقيت مهم قبل صب الخرسانة."],"e":"المخالفة تمس السلامة؛ يجب إبلاغ المالك وطلب التصحيح وفق وثائق العقد قبل أن تُغطى."},
+{"id":"ET6","t":"eth","lv":1,"s":"Errors and omissions (professional liability) insurance primarily protects a design firm against:","o":["Injuries to construction workers","Theft of contractor equipment","Criminal penalties","Claims arising from negligent professional services"],"a":3,"r":"eth","h":["الاسم نفسه دليل: أخطاء وإغفالات.","يتعلق بالخدمات المهنية.","ليس تأمين إصابات العمل."],"e":"تأمين E&O يغطي مطالبات الإهمال المهني في الخدمات الهندسية."},
+{"id":"ET7","t":"eth","lv":1,"s":"A supplier offers an expensive vacation to an engineer who is writing specifications for a project that may use the supplier's products. The engineer should:","o":["Accept and disclose it after the project","Accept but specify the supplier only if it is the best product","Accept if the supplier says it is within company policy","Decline the gift"],"a":3,"r":"eth","h":["هل يمكن أن تؤثر الهدية على حكمك؟","المظهر وحده يكفي للإضرار بالثقة.","الإجابة الأبسط هي الصحيحة."],"e":"الهدايا التي قد تؤثر على الحكم المهني تُرفض."},
+{"id":"EC1","t":"econ","lv":1,"s":"SAR 10,000 is invested at 8% compounded annually. Its value after 5 years is most nearly:","o":["SAR 6,803","SAR 13,605","SAR 14,000","SAR 14,693"],"a":3,"r":"econ","h":["قيمة مستقبلية بفائدة مركبة.","F = P(1 + i)ⁿ","1.08⁵ = 1.4693"],"e":"F = 10,000 × 1.08⁵ = 14,693\n14,000 = فائدة بسيطة ؛ 13,605 = 4 سنوات فقط."},
+{"id":"EC2","t":"econ","lv":2,"s":"A machine costs SAR 50,000 with a 10-year life and no salvage value. At i = 10%, the equivalent uniform annual cost is most nearly:","o":["SAR 2,500","SAR 5,000","SAR 7,451","SAR 8,137"],"a":3,"r":"econ","h":["تحويل P إلى A.","A/P = i(1+i)ⁿ/[(1+i)ⁿ − 1]","(1.1)¹⁰ = 2.5937"],"e":"A/P = 0.1 × 2.5937 / 1.5937 = 0.16275\nA = 50,000 × 0.16275 = 8,137\n5,000 = قسمة على 10 بدون فائدة."},
+{"id":"EC3","t":"econ","lv":1,"s":"What is the present worth of $5,000 to be received 8 years from now at 6% interest?","o":["$3,137","$3,500","$4,717","$7,969"],"a":0,"r":"econ","h":["قيمة حالية لمبلغ مستقبلي واحد.","P = F (1 + i)⁻ⁿ","1.06⁸ = 1.5938"],"e":"P = 5000 / 1.5938 = $3,137\n$7,969 هو F لو استثمرت 5000 (ضرب بدل قسمة)."},
+{"id":"EC4","t":"econ","lv":3,"s":"A flood-control project costs $800,000 initially, has annual O&M of $30,000, and produces annual benefits of $120,000 over 20 years. At 8%, the conventional benefit–cost ratio is most nearly:","o":["1.08","1.47","4.00","8.00"],"a":0,"r":"econ","h":["حوّل التكلفة الأولية إلى تكلفة سنوية.","A/P(8%, 20) = 0.10185","B/C = B / (CR + O&M)"],"e":"CR = 800,000 × 0.10185 = 81,482\nB/C = 120,000 / (81,482 + 30,000) = 1.08\n1.47 يهمل O&M ، و4.00 يهمل التكلفة الرأسمالية."},
+{"id":"EC5","t":"econ","lv":2,"type":"num","s":"A precast plant has fixed costs of $60,000 per year. Each unit costs $25 to produce and sells for $40. Enter the break-even production in units per year.","unit":"units/yr","a":4000,"tol":0.005,"r":"econ","h":["التعادل: الإيراد = التكلفة.","هامش المساهمة لكل وحدة = 40 − 25","التكاليف الثابتة ÷ الهامش"],"e":"Break-even = 60,000 / (40 − 25) = 4,000 units"},
+{"id":"EC6","t":"econ","lv":2,"s":"A contractor estimates a 30% chance of a $100,000 profit, a 50% chance of a $20,000 profit, and a 20% chance of a $50,000 loss. The expected profit is:","o":["$30,000","$40,000","$70,000","$140,000"],"a":0,"r":"econ","h":["القيمة المتوقعة = Σ p × x","الخسارة قيمة سالبة.","0.3(100k) + 0.5(20k) − 0.2(50k)"],"e":"E = 30,000 + 10,000 − 10,000 = $30,000\n$40,000 يهمل الخسارة."},
+{"id":"EC7","t":"econ","lv":1,"s":"Equipment costs SAR 120,000, has a 5-year life and a salvage value of SAR 20,000. Using straight-line depreciation, the book value at the end of year 3 is:","o":["SAR 20,000","SAR 40,000","SAR 48,000","SAR 60,000"],"a":3,"r":"econ","h":["الإهلاك السنوي = (C − S)/n","= 20,000 سنوياً","BV = C − 3D"],"e":"D = 100,000/5 = 20,000\nBV₃ = 120,000 − 60,000 = 60,000\n48,000 يهمل قيمة الخردة."},
+{"id":"EC8","t":"econ","lv":2,"s":"An engineer deposits $2,000 at the end of each year for 10 years at 5%. The account balance after the 10th deposit is most nearly:","o":["$25,156","$26,414","$32,578","$65,156"],"a":0,"r":"econ","h":["دفعات منتظمة → قيمة مستقبلية.","F = A[(1+i)ⁿ − 1]/i","1.05¹⁰ = 1.6289"],"e":"F/A = (1.6289 − 1)/0.05 = 12.578\nF = 2000 × 12.578 = $25,156\n26,414 يفترض الإيداع في بداية كل سنة."},
+{"id":"ST1","t":"statics","lv":2,"s":"A simply supported beam AB spans 8 m. It carries a 60 kN point load 2 m from A and a uniform load of 10 kN/m over the full span. The vertical reaction at A is:","o":["85 kN","95 kN","105 kN","210 kN"],"a":0,"r":"statics","h":["خذ العزوم حول B.","محصلة الحمل الموزع 80 kN عند منتصف البحر.","RA × 8 = 60 × 6 + 80 × 4"],"e":"RA(8) = 60(6) + 80(4) = 680 → RA = 85 kN\nتحقق: RB = 140 − 85 = 55 kN"},
+{"id":"ST2","t":"statics","lv":2,"s":"A 10 kN weight hangs from two identical cables, each inclined 30° above the horizontal and arranged symmetrically. The tension in each cable is:","o":["2.5 kN","5.0 kN","8.66 kN","10.0 kN"],"a":3,"r":"statics","h":["ارسم مخطط الجسم الحر.","المركبتان الرأسيتان تحملان الوزن.","2T sin 30° = 10"],"e":"2T sin 30° = 10 → T = 10 kN\nاستخدام cos 30° يعطي 5.77 kN."},
+{"id":"ST3","t":"statics","lv":3,"s":"A 500 N block rests on a 20° incline. μs = 0.30. The minimum force P, applied parallel to the incline and pointing up the slope, needed to prevent the block from sliding down is most nearly:","o":["30 N","141 N","171 N","312 N"],"a":0,"r":"statics","h":["هل ينزلق بدون P؟ قارن tan 20° مع μs.","الاحتكاك يعمل لأعلى المنحدر.","P = W(sin θ − μ cos θ)"],"e":"tan 20° = 0.364 > 0.30 → ينزلق.\nP = 500(0.342 − 0.282) = 30 N\n312 N قوة دفعه لأعلى."},
+{"id":"ST4","t":"statics","lv":3,"s":"A T-section has a 200 mm × 20 mm flange on top of a 20 mm × 180 mm web (total depth 200 mm). The centroid measured from the bottom of the web is most nearly:","o":["50.0 mm","100.0 mm","126.3 mm","142.6 mm"],"a":3,"r":"statics","h":["قسّم المقطع إلى مستطيلين.","Flange: A = 4000 عند y = 190 ؛ Web: A = 3600 عند y = 90","ȳ = Σ(A y)/ΣA"],"e":"ȳ = (4000×190 + 3600×90)/7600 = 142.6 mm"},
+{"id":"ST5","t":"statics","lv":1,"s":"The moment of inertia of a 300 mm (b) × 600 mm (h) rectangle about its horizontal centroidal axis is:","o":["0.68 × 10⁹ mm⁴","1.35 × 10⁹ mm⁴","2.70 × 10⁹ mm⁴","5.40 × 10⁹ mm⁴"],"a":3,"r":"statics","h":["المستطيل حول محوره المركزي.","I = b h³ / 12","h هو البعد العمودي على المحور (600)."],"e":"I = 300 × 600³ / 12 = 5.40 × 10⁹ mm⁴\nعكس b و h يعطي 1.35 × 10⁹."},
+{"id":"ST6","t":"statics","lv":1,"s":"Two forces act at a point: 300 N along +x and 400 N along +y. The resultant is:","o":["500 N at 36.9° from +x","700 N at 45° from +x","100 N at 53.1° from +x","500 N at 53.1° from +x"],"a":3,"r":"statics","h":["القوتان متعامدتان.","R = √(Rx² + Ry²)","θ = tan⁻¹(Ry/Rx)"],"e":"R = √(300² + 400²) = 500 N\nθ = tan⁻¹(400/300) = 53.1°\n36.9° هي الزاوية مع المحور y."},
+{"id":"ST7","t":"statics","lv":1,"s":"A 50 lb force is applied at the end of a 2 ft wrench, at 60° to the wrench handle. The moment about the bolt is most nearly:","o":["50 ft-lb","86.6 ft-lb","100 ft-lb","173 ft-lb"],"a":1,"r":"statics","h":["العزم = القوة × الذراع العمودي.","المركبة العمودية على الذراع = F sin 60°","M = F r sin θ"],"e":"M = 50 × 2 × sin 60° = 86.6 ft-lb\n100 ft-lb يفترض أن القوة عمودية."},
+{"id":"ST8","t":"statics","lv":1,"s":"At an unloaded truss joint where only two non-collinear members meet, the forces in those members are:","o":["Both zero","Equal and opposite","Equal to the nearest support reaction","Indeterminate"],"a":0,"r":"truss","h":["طبّق ΣF = 0 في اتجاهين.","لا توجد قوة خارجية عند العقدة.","قاعدة الأعضاء عديمة القوة (Zero-force)."],"e":"بدون حمل خارجي ومع عضوين غير متسامتين، الاتزان يتطلب أن يكون كلاهما صفراً."},
+{"id":"ST9","t":"statics","lv":2,"s":"A rectangle has b = 100 mm and h = 200 mm. Its moment of inertia about its base is:","o":["3.33 × 10⁷ mm⁴","6.67 × 10⁷ mm⁴","1.33 × 10⁸ mm⁴","2.67 × 10⁸ mm⁴"],"a":3,"r":"statics","h":["المحور عند القاعدة وليس المركز.","Ic = bh³/12 ثم أضف A d²","أو مباشرة bh³/3"],"e":"Ic = 100 × 200³/12 = 6.67×10⁷\nI_base = 6.67×10⁷ + 20,000 × 100² = 2.67×10⁸ mm⁴"},
+{"id":"ST10","t":"statics","lv":3,"type":"num","s":"A 200 lb crate rests on a level floor (μs = 0.35). A rope pulls on it at 30° above the horizontal. Enter the rope force P needed to start the crate sliding.","unit":"lb","a":67.2,"tol":0.01,"r":"statics","h":["المركبة الرأسية للحبل تقلل القوة العمودية N.","N = 200 − P sin 30°","P cos 30° = 0.35 N"],"e":"P cos30 = 0.35(200 − P sin30)\nP(0.866 + 0.175) = 70\nP = 67.2 lb\nلو أهملت تأثير الزاوية على N ستحصل على 80.8 lb."},
+{"id":"D1","t":"dyn","lv":1,"s":"A car traveling at 72 km/h brakes uniformly at 4 m/s² to a stop. The stopping distance is:","o":["50 m","100 m","648 m","1296 m"],"a":0,"r":"dyn","h":["حوّل السرعة إلى m/s.","72 km/h = 20 m/s","v² = v₀² − 2as"],"e":"s = 20²/(2×4) = 50 m\n648 من نسيان تحويل الوحدات."},
+{"id":"D2","t":"dyn","lv":1,"s":"An object is dropped from rest at a height of 20 m. Neglecting air resistance, the time to reach the ground is:","o":["2.02 s","2.86 s","4.08 s","8.16 s"],"a":0,"r":"dyn","h":["سقوط حر من السكون.","h = ½ g t²","t = √(2h/g)"],"e":"t = √(40/9.81) = 2.02 s\n4.08 هو t² وليس t."},
+{"id":"D3","t":"dyn","lv":1,"s":"The kinetic energy of a 1000 kg car moving at 25 m/s is:","o":["12.5 kJ","25.0 kJ","312.5 kJ","625 kJ"],"a":2,"r":"dyn","h":["KE = ½ m v²","25² = 625","½ × 1000 × 625"],"e":"KE = 312,500 J = 312.5 kJ\n625 kJ من نسيان ½."},
+{"id":"D4","t":"dyn","lv":2,"s":"A ball is thrown horizontally at 15 m/s from the top of a 20 m high wall. The horizontal distance it travels before hitting the ground is most nearly:","o":["30.3 m","45.0 m","61.2 m","122.4 m"],"a":0,"r":"dyn","h":["افصل الحركة الأفقية عن الرأسية.","زمن السقوط من الحركة الرأسية: t = √(2h/g)","x = vₓ t"],"e":"t = √(40/9.81) = 2.02 s\nx = 15 × 2.02 = 30.3 m\n61.2 يستخدم t² بدل t."},
+{"id":"D5","t":"dyn","lv":2,"s":"An elevator and its load weigh 2,000 lb and are raised 40 ft in 10 s at constant speed. The required power is most nearly:","o":["14.5 hp","145 hp","800 hp","1600 hp"],"a":0,"r":"dyn","h":["P = الشغل / الزمن","الشغل = W × h","1 hp = 550 ft-lb/s"],"e":"P = 2000 × 40 / 10 = 8,000 ft-lb/s\n= 8000/550 = 14.5 hp"},
+{"id":"D6","t":"dyn","lv":1,"s":"A solid disk of mass 50 kg and radius 0.4 m rotates about its central axis. Its mass moment of inertia is:","o":["2.0 kg·m²","3.2 kg·m²","4.0 kg·m²","8.0 kg·m²"],"a":2,"r":"dyn","h":["القرص المصمت حول محوره.","I = ½ m r²","r² = 0.16"],"e":"I = ½ × 50 × 0.16 = 4.0 kg·m²\n3.2 هي معادلة الكرة (2/5 mr²) ، 8.0 من نسيان ½."},
+{"id":"D7","t":"dyn","lv":1,"type":"num","s":"A 1,500 kg car accelerates uniformly from rest to 20 m/s in 8 s. Enter the net force required.","unit":"N","a":3750,"tol":0.005,"r":"dyn","h":["احسب التسارع أولاً.","a = Δv/t = 2.5 m/s²","F = m a"],"e":"a = 20/8 = 2.5 m/s²\nF = 1500 × 2.5 = 3,750 N"},
+{"id":"MM1","t":"mom","lv":2,"s":"A 20 mm diameter steel rod, 2 m long, carries an axial tensile force of 50 kN. E = 200 GPa. The elongation is most nearly:","o":["0.20 mm","0.40 mm","0.80 mm","1.59 mm"],"a":3,"r":"mom","h":["δ = PL/(AE)","A = π(20)²/4 = 314.2 mm²","E = 200,000 MPa"],"e":"δ = 50,000 × 2000 / (314.2 × 200,000) = 1.59 mm\nπr² مع r = 20 يعطي 0.40 mm."},
+{"id":"MM2","t":"mom","lv":2,"s":"A rectangular section, b = 200 mm and h = 400 mm, carries a maximum bending moment of 80 kN·m. The maximum bending stress is:","o":["15.0 MPa","30.0 MPa","60.0 MPa","120.0 MPa"],"a":0,"r":"mom","h":["σ = M/S","S = bh²/6","80 kN·m = 80 × 10⁶ N·mm"],"e":"S = 200 × 400²/6 = 5.333×10⁶ mm³\nσ = 15.0 MPa"},
+{"id":"MM3","t":"mom","lv":2,"s":"A solid circular shaft of 50 mm diameter transmits a torque of 2 kN·m. The maximum shear stress is most nearly:","o":["10.2 MPa","20.4 MPa","40.7 MPa","81.5 MPa"],"a":3,"r":"mom","h":["الإجهاد أقصى عند السطح.","τ = 16T/(πd³)","T = 2 × 10⁶ N·mm"],"e":"τ = 32×10⁶ / (π × 125,000) = 81.5 MPa"},
+{"id":"MM4","t":"mom","lv":3,"s":"A simply supported beam with span 6 m carries a uniform load of 10 kN/m. E = 200 GPa, I = 8 × 10⁷ mm⁴. The maximum deflection is most nearly:","o":["10.5 mm","16.9 mm","21.1 mm","42.2 mm"],"a":0,"r":"beam","h":["كمرة بسيطة بحمل موزع.","δ = 5wL⁴/(384EI)","w = 10 N/mm ؛ L = 6000 mm"],"e":"δ = 5 × 10 × 6000⁴ / (384 × 200,000 × 8×10⁷) = 10.5 mm"},
+{"id":"MM5","t":"mom","lv":2,"s":"A pinned-pinned steel column is 4 m long. E = 200 GPa, I = 2 × 10⁶ mm⁴. The Euler critical buckling load is most nearly:","o":["30.9 kN","61.7 kN","123 kN","247 kN"],"a":3,"r":"beam","h":["Pcr = π²EI/(KL)²","K = 1.0","L = 4000 mm"],"e":"Pcr = π² × 200,000 × 2×10⁶ / 4000² = 246.7 kN\n61.7 kN لعمود مثبت-حر (K = 2)."},
+{"id":"MM6","t":"mom","lv":3,"s":"At a point, σx = 80 MPa, σy = 20 MPa, τxy = 40 MPa. The maximum principal stress is:","o":["25 MPa","50 MPa","80 MPa","100 MPa"],"a":3,"r":"mom","h":["دائرة مور (Mohr's Circle).","المركز = 50","R = √(30² + 40²)"],"e":"C = 50 ، R = 50 → σ₁ = 100 MPa ، σ₂ = 0"},
+{"id":"MM7","t":"mom","lv":2,"s":"A steel bar is fully restrained at both ends and heated by 50°F. α = 6.5 × 10⁻⁶ /°F and E = 29,000 ksi. The induced axial stress is most nearly:","o":["9.4 ksi","18.9 ksi","94.3 ksi","188.6 ksi"],"a":0,"r":"mom","h":["التمدد ممنوع → إجهاد حراري.","σ = E α ΔT","الطول لا يدخل في الحساب."],"e":"σ = 29,000 × 6.5×10⁻⁶ × 50 = 9.43 ksi (ضغط)"},
+{"id":"MM8","t":"mom","lv":2,"s":"A rectangular beam 150 mm wide and 300 mm deep carries a shear force of 60 kN. The maximum shear stress is:","o":["1.33 MPa","2.00 MPa","2.67 MPa","4.00 MPa"],"a":1,"r":"mom","h":["توزيع القص على المستطيل قطع مكافئ.","τmax = 1.5 V/A","A = 45,000 mm²"],"e":"τmax = 1.5 × 60,000/45,000 = 2.0 MPa\n1.33 هو المتوسط V/A."},
+{"id":"MM9","t":"mom","lv":2,"s":"A 25 mm diameter bar has an axial strain of 0.0008. Poisson's ratio is 0.30. The change in diameter is:","o":["−0.0060 mm","−0.0200 mm","+0.0060 mm","−0.0240 mm"],"a":0,"r":"mom","h":["الانفعال الجانبي = −ν × المحوري.","ε_lat = −0.00024","Δd = ε_lat × d"],"e":"Δd = −0.3 × 0.0008 × 25 = −0.006 mm (القطر يقل في الشد)\n−0.020 يهمل نسبة بواسون."},
+{"id":"MM10","t":"mom","lv":2,"type":"multi","s":"A simply supported beam carries a single concentrated load at midspan (self-weight neglected). Which statements are true? Select all that apply.","o":["The shear is constant between a support and the load","The bending moment varies linearly between a support and the load","The maximum moment occurs where the shear changes sign","The bending moment diagram is parabolic","The maximum shear occurs only at midspan"],"a":[0,1,2],"r":"beam","h":["لا يوجد حمل موزع بين المسند والحمل.","ميل مخطط العزم = القص.","القطع المكافئ يأتي من الحمل الموزع."],"e":"بدون حمل موزع: القص ثابت، والعزم خطي، وأقصى عزم حيث يغيّر القص إشارته (تحت الحمل).\nالمخطط القطعي المكافئ خاص بالحمل الموزع."},
+{"id":"MT1","t":"mat","lv":1,"s":"A concrete mix contains 180 kg of water and 400 kg of cement per cubic meter. The water–cement ratio is:","o":["0.45","0.50","2.22","4.44"],"a":0,"r":"mat","h":["النسبة بالوزن.","w/c = الماء / الإسمنت","وليس العكس."],"e":"w/c = 180/400 = 0.45"},
+{"id":"MT2","t":"mat","lv":1,"s":"A standard 150 mm diameter concrete cylinder fails at an axial load of 450 kN. The compressive strength is most nearly:","o":["25.5 MPa","28.3 MPa","31.8 MPa","63.6 MPa"],"a":0,"r":"mat","h":["f′c = P/A","A = π(150)²/4","حوّل kN إلى N."],"e":"A = 17,671 mm² → f′c = 25.5 MPa"},
+{"id":"MT3","t":"mat","lv":2,"s":"A compacted asphalt specimen has a bulk specific gravity Gmb = 2.350 and the mix has a maximum theoretical specific gravity Gmm = 2.450. The air voids are most nearly:","o":["2.4%","4.1%","4.3%","95.9%"],"a":1,"r":"mat","h":["الفراغات الهوائية في الخلطة الأسفلتية.","Va = (1 − Gmb/Gmm) × 100","القسمة على Gmm وليس Gmb."],"e":"Va = (1 − 2.350/2.450) × 100 = 4.1%\n4.3% من القسمة على Gmb."},
+{"id":"MT4","t":"mat","lv":1,"s":"A coarse aggregate sample has an oven-dry mass of 2,000 g and a saturated-surface-dry (SSD) mass of 2,040 g. The absorption is:","o":["1.96%","2.00%","2.04%","4.00%"],"a":1,"r":"mat","h":["الامتصاص يُنسب للكتلة الجافة.","(SSD − OD)/OD","40/2000"],"e":"Absorption = 40/2000 = 2.0%\n1.96% من القسمة على كتلة SSD."},
+{"id":"MT5","t":"mat","lv":2,"type":"multi","s":"Which of the following generally increase the compressive strength of hardened concrete? Select all that apply.","o":["Lowering the water–cement ratio","Adding water on site to improve workability","Proper moist curing","Increasing the entrained air content","Thorough consolidation (vibration)"],"a":[0,2,4],"r":"mat","h":["المقاومة مرتبطة بالمسامية.","الماء الزائد والهواء يزيدان المسامية.","المعالجة والدمك يقللان الفراغات."],"e":"تقليل w/c، المعالجة الرطبة، والدمك الجيد ترفع المقاومة.\nإضافة الماء وزيادة الهواء المحبوس تخفضانها."},
+{"id":"MT6","t":"mat","lv":1,"s":"A steel tension specimen has a 50 mm gauge length that measures 61 mm after fracture. The percent elongation is:","o":["6%","11%","18%","22%"],"a":3,"r":"mat","h":["مقياس للمطيلية (Ductility).","(Lf − L₀)/L₀","11/50"],"e":"Elongation = 11/50 = 22%\n18% من القسمة على الطول النهائي."},
+{"id":"MT7","t":"mat","lv":1,"s":"A timber specimen weighs 52 g as received and 40 g after oven drying. Its moisture content is:","o":["6%","12%","23%","30%"],"a":3,"r":"mat","h":["الرطوبة تُنسب للكتلة الجافة.","كتلة الماء = 12 g","12/40"],"e":"MC = 12/40 = 30%\n23% من القسمة على الكتلة الرطبة."},
+{"id":"MT8","t":"mat","lv":2,"s":"In an absolute-volume mix design, 350 kg of cement (specific gravity 3.15) occupies a volume of most nearly:","o":["0.111 m³","0.350 m³","1.103 m³","2.206 m³"],"a":0,"r":"mat","h":["الحجم المطلق = الكتلة / (SG × ρw)","ρw = 1000 kg/m³","350/3150"],"e":"V = 350/(3.15 × 1000) = 0.111 m³"},
+{"id":"F1","t":"fl","lv":1,"s":"The gauge pressure at a depth of 10 m in fresh water is most nearly:","o":["9.81 kPa","10.0 kPa","98.1 kPa","981 kPa"],"a":2,"r":"fl","h":["p = γ h","γw = 9.81 kN/m³","kN/m² = kPa"],"e":"p = 9.81 × 10 = 98.1 kPa"},
+{"id":"F2","t":"fl","lv":1,"s":"Water flows at 2 m/s in a 300 mm diameter pipe that contracts to 150 mm diameter. The velocity in the smaller pipe is:","o":["1 m/s","4 m/s","8 m/s","16 m/s"],"a":2,"r":"fl","h":["معادلة الاستمرارية.","A₁V₁ = A₂V₂","نسبة المساحات = (D₁/D₂)²"],"e":"V₂ = 2 × (300/150)² = 8 m/s\n4 m/s من استخدام نسبة الأقطار."},
+{"id":"F4","t":"fl","lv":2,"s":"Water flows at 2 m/s through a 500 m long, 300 mm diameter pipe with Darcy friction factor f = 0.02. The head loss is most nearly:","o":["1.70 m","3.40 m","6.80 m","13.6 m"],"a":2,"r":"fl","h":["Darcy–Weisbach.","hf = f (L/D) V²/(2g)","V²/2g = 0.204 m"],"e":"hf = 0.02 × (500/0.3) × 0.204 = 6.80 m"},
+{"id":"F5","t":"fl","lv":1,"s":"The gauge pressure at a depth of 20 ft in fresh water is most nearly:","o":["8.67 psi","62.4 psi","1,248 psi","2,496 psi"],"a":0,"r":"fl","h":["p = γ h بوحدات US.","γ = 62.4 lb/ft³","1 psi = 144 psf"],"e":"p = 62.4 × 20 = 1,248 psf = 8.67 psi\n1,248 هي القيمة بالـ psf وليس psi."},
+{"id":"F6","t":"fl","lv":2,"s":"Water flows in a horizontal pipe that contracts from 300 mm to 150 mm diameter. At section 1, V₁ = 2 m/s and p₁ = 200 kPa. Neglecting losses, p₂ is most nearly (ρ = 1000 kg/m³):","o":["170 kPa","197 kPa","230 kPa","460 kPa"],"a":0,"r":"fl","h":["احسب V₂ بالاستمرارية = 8 m/s","Bernoulli: p₁ + ½ρV₁² = p₂ + ½ρV₂²","½ × 1000 × (64 − 4) = 30 kPa"],"e":"p₂ = 200 − ½(1000)(8² − 2²)/1000 = 200 − 30 = 170 kPa\nالضغط ينخفض حين تزيد السرعة."},
+{"id":"F7","t":"fl","lv":2,"type":"num","s":"A water jet with a flow of 0.01 m³/s and a velocity of 20 m/s strikes a fixed flat plate at right angles and is deflected parallel to the plate. Enter the force on the plate (ρ = 1000 kg/m³).","unit":"N","a":200,"tol":0.005,"r":"fl","h":["معادلة كمية الحركة.","F = ρ Q ΔV","السرعة العمودية على اللوح تصبح صفراً."],"e":"F = 1000 × 0.01 × (20 − 0) = 200 N"},
+{"id":"F8","t":"fl","lv":2,"s":"A vertical rectangular gate 2 m wide and 3 m high has its top edge at the water surface. The resultant hydrostatic force on the gate is most nearly:","o":["29.4 kN","58.9 kN","88.3 kN","176.6 kN"],"a":2,"r":"fl","h":["F = γ hc A","hc = عمق مركز البوابة = 1.5 m","A = 6 m²"],"e":"F = 9.81 × 1.5 × 6 = 88.3 kN\nيؤثر على عمق 2H/3 = 2.0 m.\n176.6 يستخدم العمق الكامل بدل المركز."},
+{"id":"F9","t":"fl","lv":1,"s":"A 0.5 m³ timber block with specific gravity 0.6 floats in fresh water. The submerged volume is:","o":["0.30 m³","0.50 m³","0.83 m³","1.66 m³"],"a":0,"r":"fl","h":["الوزن = قوة الطفو.","γ_block V = γw V_sub","V_sub = SG × V"],"e":"V_sub = 0.6 × 0.5 = 0.30 m³"},
+{"id":"F10","t":"fl","lv":1,"s":"Water (ν = 1.0 × 10⁻⁶ m²/s) flows at 1.5 m/s in a 100 mm pipe. The Reynolds number and flow regime are:","o":["1,500 — laminar","15,000 — turbulent","150,000 — laminar","150,000 — turbulent"],"a":3,"r":"fl","h":["Re = VD/ν","D = 0.1 m","Re > 4000 مضطرب"],"e":"Re = 1.5 × 0.1 / 10⁻⁶ = 150,000 → Turbulent"},
+{"id":"SV1","t":"sur","lv":1,"s":"A benchmark has elevation 100.00 m. A backsight of 1.50 m is taken on it, then a foresight of 2.30 m on point P. The elevation of P is:","o":["97.20 m","99.20 m","100.80 m","103.80 m"],"a":1,"r":"sur","h":["احسب HI أولاً.","HI = 101.50","Elev(P) = HI − FS"],"e":"HI = 101.50 → P = 101.50 − 2.30 = 99.20 m"},
+{"id":"SV2","t":"sur","lv":1,"s":"A traverse line is 100.00 m long with an azimuth of 60°. Its departure is:","o":["50.00 m","57.74 m","86.60 m","100.00 m"],"a":2,"r":"sur","h":["Departure = المركبة شرق-غرب.","Dep = L sin(Az)","Lat = L cos(Az)"],"e":"Dep = 100 sin 60° = 86.60 m\nLat = 50.00 m (مشتت)"},
+{"id":"SV3","t":"sur","lv":1,"s":"Starting from a benchmark at elevation 50.00 m, the readings are BS 2.10, FS 1.35, BS 1.80, FS 2.75 (m). The elevation of the final point is:","o":["46.20 m","49.80 m","50.20 m","52.20 m"],"a":1,"r":"sur","h":["Elev النهائي = BM + ΣBS − ΣFS","ΣBS = 3.90","ΣFS = 4.10"],"e":"50.00 + 3.90 − 4.10 = 49.80 m"},
+{"id":"SV4","t":"sur","lv":2,"s":"A triangular lot has corners at (0, 0), (100, 0) and (40, 80), coordinates in meters. Its area is:","o":["2,000 m²","3,200 m²","4,000 m²","8,000 m²"],"a":2,"r":"sur","h":["طريقة الإحداثيات أو ½ × القاعدة × الارتفاع.","القاعدة 100 ، الارتفاع 80","A = ½|Σ(xᵢyᵢ₊₁ − xᵢ₊₁yᵢ)|"],"e":"A = ½ × 100 × 80 = 4,000 m²\n8,000 من نسيان ½."},
+{"id":"SV5","t":"sur","lv":1,"s":"Two cut cross-sections 30 m apart have areas of 12 m² and 18 m². The earthwork volume by the average-end-area method is:","o":["360 m³","450 m³","540 m³","900 m³"],"a":1,"r":"sur","h":["متوسط مساحة الطرفين.","V = L (A₁ + A₂)/2","30 × 15"],"e":"V = 30 × (12 + 18)/2 = 450 m³"},
+{"id":"SV6","t":"sur","lv":1,"s":"A line has a bearing of S 30° E. Its azimuth measured clockwise from north is:","o":["30°","120°","150°","210°"],"a":2,"r":"sur","h":["ارسم الاتجاه: جنوب ثم شرق.","الربع الجنوبي الشرقي بين 90° و 180°","Az = 180° − 30°"],"e":"Az = 180° − 30° = 150°\n210° هي S 30° W."},
+{"id":"SV7","t":"sur","lv":2,"s":"A steel tape standardized at 68°F is used at 98°F to measure a distance recorded as 500.00 ft. α = 6.45 × 10⁻⁶ /°F. The corrected distance is most nearly:","o":["499.90 ft","500.00 ft","500.10 ft","500.97 ft"],"a":2,"r":"sur","h":["الشريط يتمدد في الحرارة.","الشريط الأطول يقرأ قيمة أقل من الحقيقية.","C = α (T − Ts) L"],"e":"C = 6.45×10⁻⁶ × 30 × 500 = +0.097 ft\nالمسافة الصحيحة = 500.10 ft"},
+{"id":"SV8","t":"sur","lv":2,"s":"A closed traverse with a perimeter of 1,500 m has ΣLatitudes = +0.12 m and ΣDepartures = −0.09 m. The precision of the traverse is:","o":["1 : 7,143","1 : 10,000","1 : 12,500","1 : 16,667"],"a":1,"r":"sur","h":["خطأ الإغلاق الخطي.","√(0.12² + 0.09²) = 0.15 m","الدقة = 1 : المحيط/الخطأ"],"e":"Misclosure = 0.15 m → 1500/0.15 = 1 : 10,000"},
+{"id":"SV9","t":"sur","lv":1,"type":"num","s":"A slope distance of 250.00 m is measured at a vertical angle of 6°. Enter the horizontal distance.","unit":"m","a":248.63,"tol":0.0002,"r":"sur","h":["زاوية رأسية من الأفقي.","H = S cos α","cos 6° = 0.99452"],"e":"H = 250 × cos 6° = 248.63 m"},
+{"id":"F3","t":"wre","lv":3,"s":"A rectangular concrete channel (n = 0.013) is 3 m wide with a flow depth of 1 m on a slope of 0.001. The discharge is most nearly:","o":["3.11 m³/s","5.19 m³/s","7.30 m³/s","9.47 m³/s"],"a":1,"r":"wre","h":["معادلة Manning (SI).","A = 3 m² ، P = 3 + 2(1) = 5 m","R = 0.6 m"],"e":"R^(2/3) = 0.711 ، S^(1/2) = 0.0316\nQ = (1/0.013) × 3 × 0.711 × 0.0316 = 5.19 m³/s\nخطأ شائع: P = b + y بدل b + 2y."},
+{"id":"E1","t":"wre","lv":2,"s":"A BOD test uses 15 mL of wastewater diluted to 300 mL. Initial DO = 8.5 mg/L and 5-day DO = 3.5 mg/L. The BOD₅ is:","o":["5 mg/L","50 mg/L","100 mg/L","250 mg/L"],"a":2,"r":"env","h":["BOD = (DOi − DOf)/P","P = 15/300 = 0.05","5/0.05"],"e":"BOD₅ = 5/0.05 = 100 mg/L"},
+{"id":"E2","t":"wre","lv":1,"s":"A sedimentation tank has a volume of 1500 m³ and receives 12,000 m³/day. The hydraulic detention time is:","o":["1.5 h","3.0 h","8.0 h","12.0 h"],"a":1,"r":"env","h":["θ = V/Q","بالأيام ثم حوّل.","0.125 day × 24"],"e":"θ = 0.125 day = 3.0 h"},
+{"id":"W1","t":"wre","lv":2,"s":"A 20 ha urban catchment has a runoff coefficient of 0.6. For a design rainfall intensity of 50 mm/h, the peak runoff by the rational method is most nearly:","o":["0.167 m³/s","1.67 m³/s","16.7 m³/s","600 m³/s"],"a":1,"r":"wre","h":["الطريقة المنطقية (Rational).","Q = C i A / 360 (SI)","0.6 × 50 × 20 / 360"],"e":"Q = 0.6 × 50 × 20 / 360 = 1.67 m³/s"},
+{"id":"W2","t":"wre","lv":1,"type":"num","s":"A 25-acre site has a runoff coefficient of 0.45 and a design rainfall intensity of 3.2 in/hr. Enter the peak runoff by the rational method.","unit":"cfs","a":36,"tol":0.005,"r":"wre","h":["بالوحدات الأمريكية Q = CiA مباشرة.","الناتج بالـ cfs.","0.45 × 3.2 × 25"],"e":"Q = 0.45 × 3.2 × 25 = 36 cfs"},
+{"id":"W3","t":"wre","lv":2,"s":"An aquifer has K = 1 × 10⁻⁴ m/s, a hydraulic gradient of 0.02, and a flow cross-section of 50 m². The groundwater flow is most nearly:","o":["1 × 10⁻⁴ m³/day","0.864 m³/day","8.64 m³/day","86.4 m³/day"],"a":2,"r":"wre","h":["قانون دارسي (Darcy).","Q = K i A = 1×10⁻⁴ m³/s","× 86,400 s/day"],"e":"Q = 1×10⁻⁴ × 0.02 × 50 = 1×10⁻⁴ m³/s = 8.64 m³/day"},
+{"id":"W4","t":"wre","lv":2,"s":"A pump delivers 2 cfs of water against a total dynamic head of 100 ft with an efficiency of 80%. The required input power is most nearly:","o":["22.7 hp","28.4 hp","36.3 hp","15,600 hp"],"a":1,"r":"wre","h":["P = γ Q H / η","γ = 62.4 lb/ft³","÷ 550 للتحويل إلى hp"],"e":"P = 62.4 × 2 × 100 / 0.8 = 15,600 ft-lb/s = 28.4 hp\n22.7 hp يهمل الكفاءة."},
+{"id":"W5","t":"wre","lv":1,"s":"In a conventional surface-water treatment plant, which process directly follows flocculation?","o":["Rapid mix (coagulation)","Filtration","Disinfection","Sedimentation"],"a":3,"r":"env","h":["الندف (Flocs) تتكوّن ثم…","تحتاج وقتاً لتترسب.","الترتيب: تخثير → تلبيد → ترسيب → ترشيح → تعقيم"],"e":"بعد التلبيد (Flocculation) يأتي الترسيب (Sedimentation)."},
+{"id":"W6","t":"wre","lv":2,"s":"Water contains 40 mg/L of calcium ion (Ca²⁺). Expressed as CaCO₃, this hardness is:","o":["40 mg/L","80 mg/L","100 mg/L","200 mg/L"],"a":2,"r":"env","h":["التحويل بالأوزان المكافئة.","Ca: 40/2 = 20 ؛ CaCO₃: 100/2 = 50","× 50/20"],"e":"40 × 50/20 = 100 mg/L as CaCO₃"},
+{"id":"W7","t":"wre","lv":2,"s":"An activated-sludge aeration tank has a volume of 1,500 m³ and MLSS of 2,500 mg/L. It treats 5,000 m³/d with influent BOD of 200 mg/L. The F/M ratio is most nearly:","o":["0.13 d⁻¹","0.27 d⁻¹","0.53 d⁻¹","3.75 d⁻¹"],"a":1,"r":"env","h":["F/M = الغذاء / الكائنات الدقيقة.","F/M = Q S₀ / (V X)","الوحدات mg/L تُختصر."],"e":"F/M = 5000 × 200 / (1500 × 2500) = 0.27 d⁻¹\n3.75 هو المقلوب."},
+{"id":"W8","t":"wre","lv":3,"s":"Using the NRCS (SCS) method, a 4.0 in storm falls on a watershed with CN = 80. The runoff depth is most nearly:","o":["1.54 in","2.04 in","2.50 in","3.50 in"],"a":1,"r":"wre","h":["احسب S أولاً.","S = 1000/CN − 10 = 2.5 in","Q = (P − 0.2S)²/(P + 0.8S)"],"e":"S = 2.5 ؛ Q = (4 − 0.5)²/(4 + 2) = 12.25/6 = 2.04 in"},
+{"id":"W9","t":"wre","lv":2,"s":"A 3 m wide rectangular channel carries 6 m³/s. The critical depth is most nearly:","o":["0.41 m","0.74 m","1.11 m","2.00 m"],"a":1,"r":"wre","h":["التدفق لكل متر عرض q = Q/b","q = 2 m²/s","yc = (q²/g)^(1/3)"],"e":"yc = (4/9.81)^(1/3) = 0.74 m\n1.11 هي الطاقة الحرجة 1.5yc."},
+{"id":"W10","t":"wre","lv":2,"s":"Water flows at 3 m/s and a depth of 0.5 m in a wide rectangular channel. The Froude number and flow regime are:","o":["0.68 — subcritical","1.35 — subcritical","1.35 — supercritical","1.83 — supercritical"],"a":2,"r":"wre","h":["Fr = V/√(g y)","√(9.81 × 0.5) = 2.21","Fr > 1 → فوق الحرج"],"e":"Fr = 3/2.21 = 1.35 → Supercritical"},
+{"id":"W11","t":"wre","lv":1,"type":"num","s":"A plant treats 10,000 m³/d with a chlorine dose of 2 mg/L. Enter the daily chlorine requirement.","unit":"kg/day","a":20,"tol":0.005,"r":"env","h":["الحمل الكتلي.","kg/d = mg/L × m³/d / 1000","10,000 × 2 / 1000"],"e":"= 20 kg/day"},
+{"id":"SA1","t":"str","lv":1,"s":"A straight beam is fixed at one end and supported on a roller at the other. The beam is:","o":["Statically determinate and stable","Indeterminate to the second degree","Unstable","Indeterminate to the first degree"],"a":3,"r":"beam","h":["عدّ ردود الأفعال r.","الثابت = 3 ، الدرفيل = 1","قارن بـ 3 معادلات."],"e":"r = 4 → درجة اللاتحديد = 1 (Propped cantilever)."},
+{"id":"SA2","t":"str","lv":2,"s":"A 3 m cantilever carries a 15 kN point load at its free end and a uniform load of 4 kN/m over its full length. The fixed-end moment magnitude is:","o":["45 kN·m","54 kN·m","63 kN·m","81 kN·m"],"a":2,"r":"beam","h":["اجمع تأثير الحملين.","المركز: P × L","الموزع: wL²/2"],"e":"M = 45 + 18 = 63 kN·m"},
+{"id":"SA3","t":"str","lv":2,"s":"A beam fixed at both ends spans 5 m and carries a uniform load of 24 kN/m. The fixed-end moment is:","o":["25.0 kN·m","37.5 kN·m","50.0 kN·m","75.0 kN·m"],"a":2,"r":"beam","h":["عزم الطرف المثبت.","FEM = wL²/12","24 × 25 / 12"],"e":"FEM = 50 kN·m ؛ عزم المنتصف wL²/24 = 25 ؛ wL²/8 = 75 للبسيطة."},
+{"id":"SA4","t":"str","lv":3,"s":"A symmetric triangular truss spans 6 m with an apex 2 m high. It is simply supported and carries 30 kN vertically at the apex. The force in the bottom chord is:","o":["15.0 kN tension","22.5 kN tension","27.0 kN compression","45.0 kN tension"],"a":1,"r":"truss","h":["ردود الأفعال 15 kN بالتماثل.","tan θ = 2/3","أو ΣM عند القمة لنصف الجمالون."],"e":"15 × 3 = T × 2 → T = 22.5 kN شد\nالقطري = 27.0 kN ضغط."},
+{"id":"SD1","t":"str","lv":3,"s":"A singly reinforced rectangular beam: b = 300 mm, d = 500 mm, As = 1500 mm², f′c = 28 MPa, fy = 420 MPa. The design flexural strength φMn is most nearly (assume tension-controlled):","o":["230 kN·m","259 kN·m","287 kN·m","315 kN·m"],"a":1,"r":"rc","h":["احسب a أولاً.","a = 88.2 mm","φMn = 0.9 As fy (d − a/2)"],"e":"Mn = 1500 × 420 × (500 − 44.1) = 287.2 kN·m\nφMn = 258.5 kN·m ؛ εt = 0.0114 ✓"},
+{"id":"SD2","t":"str","lv":2,"s":"For a normal-weight concrete beam with bw = 300 mm, d = 450 mm, and f′c = 25 MPa, the nominal concrete shear strength Vc (simplified ACI expression) is most nearly:","o":["86.1 kN","114.8 kN","153.0 kN","229.5 kN"],"a":1,"r":"rc","h":["Vc = 0.17 λ √f′c bw d","λ = 1 ، √25 = 5","المطلوب الاسمية بدون φ."],"e":"Vc = 0.17 × 5 × 300 × 450 = 114.8 kN\n86.1 هو φVc."},
+{"id":"SD3","t":"str","lv":1,"s":"A steel tension member has Ag = 3000 mm² and Fy = 250 MPa. Its design strength for tensile yielding (LRFD) is:","o":["562.5 kN","675.0 kN","750.0 kN","900.0 kN"],"a":1,"r":"steel","h":["خضوع المقطع الكلي.","φ = 0.90","φPn = 0.9 Fy Ag"],"e":"φPn = 675 kN\n562.5 يستخدم φ = 0.75 (للكسر)."},
+{"id":"SD4","t":"str","lv":1,"s":"A floor beam carries D = 20 kN/m and L = 15 kN/m. The governing factored load (ASCE 7 strength combinations) is:","o":["28.0 kN/m","35.0 kN/m","48.0 kN/m","53.5 kN/m"],"a":2,"r":"rc","h":["قارن 1.4D و 1.2D + 1.6L","1.4 × 20 = 28","24 + 24"],"e":"1.2D + 1.6L = 48 kN/m ← الحاكم\n53.5 تركيبة ACI القديمة."},
+{"id":"R1","t":"str","lv":1,"s":"A simply supported beam spans 20 ft and carries a uniform load of 2 kip/ft. The maximum bending moment is:","o":["50 ft-kip","100 ft-kip","200 ft-kip","400 ft-kip"],"a":1,"r":"beam","h":["كمرة بسيطة بحمل موزع.","M = wL²/8","2 × 400 / 8"],"e":"M = 100 ft-kip"},
+{"id":"R2","t":"str","lv":2,"s":"A plane truss with stable geometry has 9 members, 6 joints, and 3 reaction components. The truss is:","o":["Statically determinate","Indeterminate to the first degree","Indeterminate to the second degree","Unstable"],"a":0,"r":"truss","h":["قارن m + r مع 2j.","m + r = 12","2j = 12"],"e":"m + r = 2j = 12 → محدد استاتيكياً."},
+{"id":"R3","t":"str","lv":1,"s":"An interior column supports a floor with bays of 8 m × 6 m in each direction. The floor load is 5 kPa. The load delivered to the column from this floor is:","o":["60 kN","120 kN","240 kN","480 kN"],"a":2,"r":"beam","h":["المساحة المحمولة (Tributary area).","العمود الداخلي يأخذ نصف البحر من كل جهة.","A = 8 × 6 = 48 m²"],"e":"P = 5 × 48 = 240 kN\n60 kN يأخذ ربع البحر فقط."},
+{"id":"R4","t":"str","lv":1,"s":"A pinned-pinned steel column is 15 ft long and has a least radius of gyration of 2.0 in. Its slenderness ratio KL/r is:","o":["7.5","22.5","90","180"],"a":2,"r":"beam","h":["وحّد الوحدات.","15 ft = 180 in","K = 1.0"],"e":"KL/r = 180/2 = 90\n7.5 من عدم تحويل القدم إلى بوصة."},
+{"id":"R5","t":"str","lv":2,"s":"A straight beam rests on three rollers, all providing only vertical reactions. The beam is:","o":["Unstable — it cannot resist horizontal load","Statically determinate","Indeterminate to the first degree","Indeterminate to the second degree"],"a":0,"r":"beam","h":["عدد ردود الأفعال وحده لا يكفي.","هل يوجد رد فعل أفقي؟","ترتيب ردود الأفعال يحدد الاستقرار."],"e":"كل ردود الأفعال متوازية (رأسية) → غير مستقر هندسياً رغم r = 3."},
+{"id":"R6","t":"str","lv":2,"type":"num","s":"A steel plate in tension has a net area An = 2,400 mm², shear lag factor U = 0.85, and Fu = 400 MPa. Enter the LRFD design strength for tensile rupture.","unit":"kN","a":612,"tol":0.005,"r":"steel","h":["حالة الكسر في المقطع الصافي.","Ae = U An","φPn = 0.75 Fu Ae"],"e":"Ae = 2040 mm²\nφPn = 0.75 × 400 × 2040 = 612 kN"},
+{"id":"G1","t":"geo","lv":1,"s":"A saturated soil has water content w = 20% and Gs = 2.70. The void ratio is:","o":["0.20","0.54","0.74","1.35"],"a":1,"r":"geo","h":["علاقة الأطوار.","S e = w Gs","S = 1"],"e":"e = 0.20 × 2.70 = 0.54"},
+{"id":"G2","t":"geo","lv":1,"s":"A soil has a total (moist) unit weight of 19.0 kN/m³ at a water content of 15%. The dry unit weight is:","o":["16.15 kN/m³","16.52 kN/m³","17.00 kN/m³","21.85 kN/m³"],"a":1,"r":"geo","h":["γd = γ/(1 + w)","w = 0.15","19/1.15"],"e":"γd = 16.52 kN/m³"},
+{"id":"G3","t":"geo","lv":2,"s":"For a sand with γsat = 20 kN/m³ and the water table at the ground surface, the vertical effective stress at 5 m depth is most nearly:","o":["49.1 kPa","51.0 kPa","100.0 kPa","149.1 kPa"],"a":1,"r":"geo","h":["σ′ = σ − u","σ = 100 kPa","u = 9.81 × 5"],"e":"σ′ = 100 − 49.05 = 51.0 kPa"},
+{"id":"G4","t":"geo","lv":2,"s":"A 6 m high smooth vertical wall retains dry sand (γ = 18 kN/m³, φ = 30°) with a horizontal backfill. The Rankine active thrust per meter of wall is:","o":["54 kN/m","108 kN/m","216 kN/m","972 kN/m"],"a":1,"r":"geo","h":["Ka = tan²(45 − φ/2)","Ka = 1/3","Pa = ½ Ka γ H²"],"e":"Pa = ½ × ⅓ × 18 × 36 = 108 kN/m عند H/3\n972 هي السلبية (Kp = 3)."},
+{"id":"G5","t":"geo","lv":3,"s":"A 4 m thick normally consolidated clay layer has Cc = 0.30 and e₀ = 0.90. At mid-depth σ′₀ = 100 kPa and the added stress Δσ = 50 kPa. The primary consolidation settlement is most nearly:","o":["56 mm","111 mm","176 mm","232 mm"],"a":1,"r":"geo","h":["NC clay.","S = Cc H/(1 + e₀) × log[(σ′₀ + Δσ)/σ′₀]","log(1.5) = 0.176"],"e":"S = 0.30 × 4000/1.90 × 0.1761 = 111 mm\nاستخدام ln يعطي 256 mm."},
+{"id":"G6","t":"geo","lv":2,"s":"A sand has Gs = 2.65 and a void ratio of 0.60. Its dry unit weight is most nearly:","o":["64.6 pcf","103.4 pcf","113.1 pcf","165.4 pcf"],"a":1,"r":"geo","h":["γd = Gs γw/(1 + e)","γw = 62.4 pcf","2.65 × 62.4 / 1.6"],"e":"γd = 165.4/1.6 = 103.4 pcf\n165.4 بدون القسمة على (1 + e)."},
+{"id":"G7","t":"geo","lv":2,"s":"A soil has 60% passing the No. 200 sieve, LL = 45, and PI = 25. Its USCS group symbol is:","o":["ML","CH","SC","CL"],"a":3,"r":"geo","h":["أكثر من 50% ناعم → تربة ناعمة.","LL < 50 → L","A-line: PI = 0.73(LL − 20) = 18.3"],"e":"ناعمة، LL < 50، و PI = 25 فوق خط A (18.3) → CL"},
+{"id":"G8","t":"geo","lv":2,"s":"A strip footing 1 m below grade rests on saturated clay (c = 50 kPa, φ = 0, γ = 18 kN/m³). Using Nc = 5.7, Nq = 1.0, Nγ = 0, the ultimate bearing capacity is most nearly:","o":["101 kPa","285 kPa","303 kPa","321 kPa"],"a":2,"r":"geo","h":["qult = cNc + qNq + ½γBNγ","q = γ Df = 18 kPa","الحد الثالث صفر."],"e":"qult = 285 + 18 = 303 kPa\n101 هي qall مع FS = 3."},
+{"id":"G9","t":"geo","lv":2,"s":"A sand has c′ = 10 kPa and φ′ = 30°. On a plane with effective normal stress 100 kPa, the shear strength is most nearly:","o":["57.7 kPa","60.0 kPa","67.7 kPa","96.6 kPa"],"a":2,"r":"geo","h":["Mohr–Coulomb.","τ = c′ + σ′ tan φ′","tan 30° = 0.577"],"e":"τ = 10 + 57.7 = 67.7 kPa"},
+{"id":"G10","t":"geo","lv":1,"s":"A field density test gives γd = 17.5 kN/m³. The laboratory maximum dry unit weight is 18.6 kN/m³. The relative compaction is:","o":["5.9%","91.2%","94.1%","106.3%"],"a":2,"r":"geo","h":["RC = الحقلي / المعملي.","17.5/18.6","النتيجة أقل من 100%."],"e":"RC = 94.1%"},
+{"id":"G11","t":"geo","lv":3,"s":"A 4 m thick clay layer drains at both top and bottom. cv = 2 m²/yr. The time to reach 90% consolidation is most nearly (Tv = 0.848):","o":["0.42 yr","1.70 yr","3.39 yr","6.78 yr"],"a":1,"r":"geo","h":["تصريف من الجهتين → Hdr = H/2","Hdr = 2 m","t = Tv Hdr²/cv"],"e":"t = 0.848 × 4 / 2 = 1.70 yr\n6.78 يستخدم Hdr = 4 m."},
+{"id":"G12","t":"geo","lv":2,"s":"An infinite dry sand slope has φ = 35° and a slope angle of 25°. The factor of safety against sliding is most nearly:","o":["0.67","1.40","1.50","2.00"],"a":2,"r":"geo","h":["منحدر لانهائي، رمل جاف.","FS = tan φ / tan β","استخدم الظل وليس الزوايا."],"e":"FS = 0.700/0.466 = 1.50\n1.40 = 35/25 (قسمة زوايا)."},
+{"id":"G13","t":"geo","lv":1,"type":"multi","s":"Which of the following are needed to classify a fine-grained soil by the USCS? Select all that apply.","o":["Liquid limit","Plastic limit","Percent passing the No. 200 sieve","Standard Proctor maximum dry density","California Bearing Ratio (CBR)"],"a":[0,1,2],"r":"geo","h":["التصنيف يعتمد على التدرج واللدونة.","Proctor اختبار دمك.","CBR اختبار مقاومة."],"e":"USCS للتربة الناعمة: نسبة المار من No. 200 + LL + PL (لحساب PI).\nProctor و CBR ليسا للتصنيف."},
+{"id":"G14","t":"geo","lv":1,"type":"num","s":"A soil has a void ratio of 0.75. Enter its porosity as a decimal.","unit":"","a":0.429,"tol":0.005,"r":"geo","h":["المسامية من نسبة الفراغات.","n = e/(1 + e)","0.75/1.75"],"e":"n = 0.75/1.75 = 0.429"},
+{"id":"T1","t":"tr","lv":2,"s":"Design speed 80 km/h, perception–reaction time 2.5 s, deceleration 3.4 m/s², level grade. The stopping sight distance is most nearly:","o":["55.6 m","73.4 m","129 m","158 m"],"a":2,"r":"tr","h":["SSD = رد الفعل + الفرملة.","0.278 V t","0.039 V²/a"],"e":"55.6 + 73.4 = 129 m"},
+{"id":"T2","t":"tr","lv":1,"s":"A traffic stream has a density of 30 veh/km and a space-mean speed of 60 km/h. The flow rate is:","o":["2 veh/h","90 veh/h","1800 veh/h","3600 veh/h"],"a":2,"r":"tr","h":["العلاقة الأساسية.","q = k × v","veh/km × km/h"],"e":"q = 1800 veh/h"},
+{"id":"T3","t":"tr","lv":2,"s":"A horizontal circular curve has radius 500 m and deflection angle Δ = 40°. The length of the curve is most nearly:","o":["182 m","340 m","349 m","698 m"],"a":2,"r":"tr","h":["طول القوس.","L = π R Δ / 180","Δ بالدرجات."],"e":"L = 349.1 m\n182 m هو طول المماس."},
+{"id":"T4","t":"tr","lv":2,"s":"For a design speed of 60 mph, perception–reaction time 2.5 s, and deceleration 11.2 ft/s² on a level grade, the stopping sight distance is most nearly:","o":["221 ft","346 ft","566 ft","655 ft"],"a":2,"r":"tr","h":["المعادلة بالوحدات الأمريكية.","1.47 V t = 220.5 ft","1.075 V²/a = 345.5 ft"],"e":"SSD = 220.5 + 345.5 = 566 ft"},
+{"id":"T5","t":"tr","lv":2,"s":"A crest vertical curve 400 m long connects a +3% grade to a −2% grade. The high point is located how far from the BVC?","o":["160 m","200 m","240 m","400 m"],"a":2,"r":"tr","h":["نقطة القمة حيث الميل = صفر.","x = g₁ L / (g₁ − g₂)","3 × 400 / 5"],"e":"x = 240 m"},
+{"id":"T6","t":"tr","lv":1,"s":"An approach carries 1,600 veh/h with a peak 15-minute volume of 450 vehicles. The peak hour factor is:","o":["0.28","0.75","0.89","1.13"],"a":2,"r":"tr","h":["PHF ≤ 1 دائماً.","PHF = V / (4 V15)","1600 / 1800"],"e":"PHF = 1600/1800 = 0.89"},
+{"id":"T7","t":"tr","lv":2,"s":"A curve with R = 400 m is designed for 100 km/h with a side friction factor of 0.12. The required superelevation is most nearly:","o":["0.040","0.077","0.197","0.317"],"a":1,"r":"tr","h":["e + f = V²/(127R)","V² /127R = 0.197","اطرح f."],"e":"e = 0.197 − 0.12 = 0.077"},
+{"id":"T8","t":"tr","lv":2,"s":"A highway follows the Greenshields model with free-flow speed 90 km/h and jam density 150 veh/km. Its capacity is:","o":["1,688 veh/h","3,375 veh/h","6,750 veh/h","13,500 veh/h"],"a":1,"r":"tr","h":["السعة القصوى في نموذج Greenshields.","qmax = vf kj / 4","90 × 150 / 4"],"e":"qmax = 3,375 veh/h\n6,750 يقسم على 2 بدل 4."},
+{"id":"T9","t":"tr","lv":2,"s":"Using the fourth-power approximation, the load equivalency factor of a 24-kip single axle relative to the 18-kip standard axle is most nearly:","o":["1.33","1.78","3.16","4.00"],"a":2,"r":"tr","h":["ESAL = (P/18)⁴","24/18 = 1.333","1.333⁴"],"e":"1.333⁴ = 3.16"},
+{"id":"T10","t":"tr","lv":1,"s":"In the four-step travel demand model, which step immediately follows trip distribution?","o":["Trip generation","Traffic assignment","Land-use allocation","Mode choice"],"a":3,"r":"tr","h":["كم رحلة؟ ← إلى أين؟ ← بأي وسيلة؟ ← أي طريق؟","التوزيع يحدد الوجهة.","ثم الوسيلة."],"e":"Generation → Distribution → Mode choice → Assignment"},
+{"id":"T11","t":"tr","lv":2,"s":"Approach speed 50 km/h, perception–reaction time 1.0 s, deceleration 3.0 m/s², level grade. The yellow change interval is most nearly:","o":["2.3 s","3.3 s","4.6 s","5.6 s"],"a":1,"r":"tr","h":["Y = t + V/(2a)","V = 13.89 m/s","13.89/6 = 2.31"],"e":"Y = 1.0 + 2.31 = 3.3 s"},
+{"id":"T12","t":"tr","lv":1,"type":"num","s":"A horizontal curve has R = 300 m and Δ = 30°. Enter the tangent length T.","unit":"m","a":80.38,"tol":0.003,"r":"tr","h":["طول المماس.","T = R tan(Δ/2)","tan 15° = 0.2679"],"e":"T = 300 × 0.2679 = 80.38 m"},
+{"id":"T13","t":"tr","lv":1,"s":"A lane carries 1,200 veh/h. The average time headway is:","o":["0.33 s","3.0 s","30 s","50 s"],"a":1,"r":"tr","h":["الفاصل الزمني = مقلوب التدفق.","h = 3600/q","بالثواني."],"e":"h = 3600/1200 = 3.0 s"},
+{"id":"C1","t":"cm","lv":2,"s":"An excavator has a 1.5 m³ bucket and a 30-second cycle time. Working efficiency is a 50-minute hour. The hourly production is:","o":["100 m³/h","150 m³/h","180 m³/h","225 m³/h"],"a":1,"r":"cm","h":["الدورات/ساعة = 120","× 50/60","× 1.5"],"e":"100 × 1.5 = 150 m³/h"},
+{"id":"C2","t":"cm","lv":2,"s":"Activities: A (3 d); B (4 d) after A; C (6 d) after A; D (2 d) after both B and C. The total float of activity B is:","o":["0 d","1 d","2 d","4 d"],"a":2,"r":"cm","h":["المسار الحرج A–C–D = 11","B: ES = 3","TF = LS − ES"],"e":"LF(B) = 9 → LS = 5 → TF = 2 d"},
+{"id":"C3","t":"cm","lv":2,"s":"At a status date: earned value (BCWP) = $200,000, actual cost (ACWP) = $250,000, planned value (BCWS) = $220,000. The cost variance and schedule variance are:","o":["CV = −$50,000 ; SV = −$20,000","CV = +$50,000 ; SV = +$20,000","CV = −$30,000 ; SV = −$50,000","CV = −$20,000 ; SV = −$50,000"],"a":0,"r":"cm","h":["كل الفروقات تبدأ بـ EV.","CV = EV − AC","SV = EV − PV"],"e":"CV = −50,000 (تجاوز تكلفة) ؛ SV = −20,000 (تأخر)"},
+{"id":"C4","t":"cm","lv":2,"s":"1,000 m³ (bank) of soil with 25% swell is hauled in 10 m³ trucks (loose capacity). The number of truck loads is:","o":["80","100","125","150"],"a":2,"r":"cm","h":["التربة تنتفش بعد الحفر.","Loose = 1000 × 1.25","÷ 10"],"e":"1250/10 = 125 loads"},
+{"id":"C5","t":"cm","lv":1,"s":"A slab is 40 ft × 30 ft × 6 in thick. The concrete volume is most nearly:","o":["7.4 yd³","22.2 yd³","66.7 yd³","200 yd³"],"a":1,"r":"cm","h":["6 in = 0.5 ft","V = 600 ft³","1 yd³ = 27 ft³"],"e":"600/27 = 22.2 yd³\n66.7 يقسم على 9."},
+{"id":"C6","t":"cm","lv":2,"s":"1,200 m² of formwork requires 0.5 labor-hours per m². A crew of 4 workers works 8-hour days. The duration is most nearly:","o":["4.7 days","18.75 days","75 days","150 days"],"a":1,"r":"cm","h":["إجمالي ساعات العمل = 600","ساعات الطاقم اليومية = 32","600/32"],"e":"600/32 = 18.75 days"},
+{"id":"C7","t":"cm","lv":1,"s":"The free float of an activity is the time by which it can be delayed without delaying:","o":["The early start of any immediate successor","The project completion date","The late finish of any successor","The start of the project"],"a":0,"r":"cm","h":["فرّق بين Total و Free float.","Total float يحمي تاريخ المشروع.","Free float يحمي الأنشطة اللاحقة."],"e":"Free float = التأخير المسموح دون تأخير البداية المبكرة لأي نشاط لاحق."},
+{"id":"C8","t":"cm","lv":1,"s":"Under OSHA excavation rules, a protective system (sloping, shoring, or shielding) is required for trenches at least how deep, unless they are in stable rock?","o":["3 ft","4 ft","5 ft","20 ft"],"a":2,"r":"cm","h":["OSHA 29 CFR 1926 Subpart P.","1.5 m تقريباً.","20 ft حد التصميم بمهندس."],"e":"5 ft (1.5 m). أكثر من 20 ft يتطلب تصميماً من مهندس مسجل."},
+{"id":"C9","t":"cm","lv":1,"s":"On a drawing at a scale of 1:50, a line measures 84 mm. The real length is:","o":["0.42 m","1.68 m","4.20 m","42.0 m"],"a":2,"r":"cm","h":["الطول الحقيقي = المقاس × 50","84 × 50 = 4200 mm","حوّل إلى متر."],"e":"4.20 m"},
+{"id":"C10","t":"cm","lv":1,"s":"Which contract type places the greatest cost risk on the contractor?","o":["Cost plus fixed fee","Cost plus percentage","Time and materials","Lump sum (fixed price)"],"a":3,"r":"cm","h":["من يتحمل زيادة التكاليف؟","في عقود Cost-plus المالك يدفع التكلفة.","السعر الثابت لا يتغير."],"e":"العقد بمبلغ مقطوع (Lump sum) يحمّل المقاول مخاطر التكلفة."},
+{"id":"C11","t":"cm","lv":2,"type":"num","s":"A dozer has an ideal production of 300 LCY/h. Apply a 50-minute-hour job efficiency and an operator factor of 0.75. Enter the adjusted production.","unit":"LCY/h","a":187.5,"tol":0.005,"r":"cm","h":["اضرب في كل المعاملات.","الكفاءة = 50/60","300 × 0.833 × 0.75"],"e":"300 × (50/60) × 0.75 = 187.5 LCY/h"}
+];
+const QBY=Object.fromEntries(Q.map(q=>[q.id,q]));
+const TARGET_SEC=175;
+const LTR="ABCDEF";
+
+/* ===================== LESSONS ===================== */
+const LESSONS={
+math:{c:["الهندسة التحليلية: المسافة d = √(Δx² + Δy²) ، الميل m = Δy/Δx ، الدائرة (x − h)² + (y − k)² = r².","التفاضل: النقاط الحرجة عند f′ = 0 ، وإشارة f″ تحدد صغرى (+) أو عظمى (−).","التكامل: ∫xⁿdx = xⁿ⁺¹/(n+1) ، والتكامل المحدد = المساحة تحت المنحنى.","المتجهات (Vectors): الضرب النقطي يعطي الزاوية cos θ = A·B/(|A||B|) ، والضرب الاتجاهي يعطي العزم.","الإحصاء: المتوسط، الانحراف المعياري للعينة (÷ n − 1) ، Z = (x − μ)/σ ، وفترة الثقة x̄ ± z σ/√n.","الانحدار الخطي (Regression): معادلاته في الكتاب المرجعي، والأسرع وضع STAT في الآلة الحاسبة."],ex:["أوجد ∫₀³ 2x dx","= [x²]₀³ = 9"],tr:["نسيان الإشارة السالبة في الحد الأوسط للمحدد.","الآلة على Radian بدل Degree.","القسمة على n بدل n − 1 للعينة."]},
+eth:{c:["سلامة الجمهور وصحته ورفاهيته فوق صاحب العمل والعميل.","لا تختم إلا ما أُعدّ تحت إشرافك المسؤول (Responsible Charge).","اعمل فقط في مجال كفاءتك، وأفصح عن تضارب المصالح، وارفض الهدايا المؤثرة.","الترخيص (Licensure) غرضه حماية الجمهور.","العقد الملزم: إيجاب وقبول، مقابل (Consideration)، أهلية الأطراف، غرض مشروع.","المسؤولية المهنية: الإهمال (Negligence) يغطيه تأمين الأخطاء والإغفالات (E&O)."],ex:["اكتشفت خطأً إنشائياً خطيراً في مبنى بعد التسليم.","أبلغ العميل والجهة المختصة فوراً"],tr:["اختيار الحل الذي يرضي صاحب العمل على حساب السلامة.","الاعتقاد أن موافقة صاحب العمل تبرر المخالفة."]},
+econ:{c:["F = P(1 + i)ⁿ هي أساس كل المعاملات. جداول المعاملات موجودة في الكتاب المرجعي — تعلّم قراءتها بسرعة.","تحويل P ↔ A بمعامل A/P أو P/A ، و A → F بمعامل F/A.","المقارنة بين البدائل: Present Worth أو Annual Worth بنفس العمر.","الإهلاك بالقسط الثابت D = (C − S)/n.","نسبة المنفعة للتكلفة B/C ، نقطة التعادل (Break-even)، والقيمة المتوقعة Σpx."],ex:["قيمة 5000 بعد 3 سنوات بفائدة 6%؟","5000 × 1.06³ = 5955"],tr:["الفائدة البسيطة بدل المركبة.","الخلط بين الإيداع في نهاية السنة وبدايتها.","إهمال قيمة الخردة في الإهلاك."]},
+statics:{c:["كل مسألة تبدأ بمخطط الجسم الحر (FBD) — حتى في المسائل السهلة.","الاتزان: ΣFx = 0 ، ΣFy = 0 ، ΣM = 0. خذ العزوم عند نقطة تمر بها أكبر عدد من المجاهيل.","الحمل الموزع يُستبدل بمحصلته: wL عند L/2 (منتظم) أو wL/2 عند L/3 من الطرف الأكبر (مثلثي).","الجمالونات: طريقة العقد وطريقة المقاطع، والأعضاء عديمة القوة.","الاحتكاك: F ≤ μs N. القوة المائلة تغيّر N.","المركز الهندسي ȳ = ΣAy/ΣA ، وعزم القصور I = bh³/12 ثم I = Ic + Ad²."],ex:["كمرة 6 m بسيطة، حمل 30 kN على بعد 2 m من A. أوجد RA.","ΣMB: RA × 6 = 30 × 4 → RA = 20 kN"],tr:["أخذ المسافة من المسند الخطأ.","نسيان تحويل الحمل الموزع لمحصلة.","استخدام sin بدل cos (ارسم المثلث دائماً)."]},
+dyn:{c:["الحركة بتسارع ثابت: v = v₀ + at ، s = v₀t + ½at² ، v² = v₀² + 2as.","المقذوفات: الحركة الأفقية بسرعة ثابتة، والرأسية بتسارع g.","قانون نيوتن ΣF = ma ، والشغل والطاقة ΣW = ΔKE.","القدرة P = W/t = Fv ، و 1 hp = 550 ft-lb/s.","عزم القصور الكتلي: القرص ½mr² ، القضيب حول المنتصف mL²/12."],ex:["جسم يتحرك بـ 10 m/s ويتسارع 2 m/s² لمدة 5 s. المسافة؟","s = 10×5 + ½×2×25 = 75 m"],tr:["عدم تحويل km/h إلى m/s (÷3.6).","نسيان ½ في الطاقة الحركية.","g = 32.2 ft/s² في المسائل الأمريكية."]},
+mom:{c:["σ = P/A ، ε = δ/L ، σ = Eε → δ = PL/AE.","الحرارة: δ = αLΔT ، والعضو المقيّد σ = EαΔT. نسبة بواسون: ε_lat = −ν ε.","الانحناء σ = Mc/I = M/S ، والمستطيل S = bh²/6.","القص τ = VQ/Ib ، والمستطيل τmax = 1.5V/A.","الالتواء τ = Tr/J ، والعمود المصمت J = πd⁴/32.","مخططات القص والعزم: ميل مخطط العزم = القص. دائرة مور للإجهادات الرئيسية."],ex:["قضيب مساحته 500 mm² يحمل 100 kN، E = 200 GPa، L = 3 m. الاستطالة؟","δ = 100,000 × 3000/(500 × 200,000) = 3 mm"],tr:["الخلط بين القطر ونصف القطر.","وحدات: kN·m × 10⁶ = N·mm ، GPa × 1000 = MPa.","bh²/6 للمقاومة S وليس bh³/12."]},
+mat:{c:["الخرسانة: w/c أقل → مقاومة أعلى. المقاومة بأسطوانة 150×300 mm (6×12 in) عند 28 يوماً.","تصميم الخلطة بالحجم المطلق: V = الكتلة/(SG × 1000).","الركام: حالات الرطوبة (OD, SSD)، الامتصاص يُنسب للكتلة الجافة.","الأسفلت: Va = (1 − Gmb/Gmm) ، VMA ، VFA ، ودرجة الأداء PG.","الحديد: منحنى الإجهاد-الانفعال، Fy ، Fu ، المطيلية (% elongation).","الخشب: الرطوبة تُنسب للوزن الجاف، والمقاومة تعتمد على اتجاه الألياف."],ex:["خلطة: إسمنت 350 kg ، ماء 175 kg. w/c؟","0.50"],tr:["القسمة على الكتلة الرطبة بدل الجافة.","قلب نسبة w/c.","القسمة على Gmb بدل Gmm."]},
+fl:{c:["الضغط الهيدروستاتيكي p = γh. γw = 9.81 kN/m³ = 62.4 lb/ft³.","القوة على سطح مغمور F = γ hc A ، ونقطة تأثيرها أعمق من المركز.","الطفو F_B = γ V_sub.","الاستمرارية Q = AV ، وبرنولي p/γ + V²/2g + z = ثابت.","كمية الحركة F = ρQΔV.","رقم رينولدز Re = VD/ν يحدد نوع الجريان، وفواقد الاحتكاك من Darcy."],ex:["ماء بعمق 3 m ، الضغط عند القاع؟","p = 9.81 × 3 = 29.4 kPa"],tr:["psf بدل psi (÷144).","استخدام نسبة الأقطار بدل مربعها.","استخدام العمق الكامل بدل عمق المركز."]},
+sur:{c:["التسوية: HI = منسوب معلوم + BS ، المنسوب = HI − FS.","الاتجاهات: Bearing ↔ Azimuth (الربع الجنوبي الشرقي Az = 180° − θ).","الترافرس: Lat = L cos Az ، Dep = L sin Az ، وخطأ الإغلاق √(ΣLat² + ΣDep²).","المساحات بالإحداثيات، والحجوم بمتوسط مساحة الطرفين.","تصحيحات الشريط: الحرارة C = α(T − Ts)L ، والمسافة الأفقية H = S cos α."],ex:["مقطعان 20 m² و 30 m² على بعد 25 m. الحجم؟","V = 25 × (20 + 30)/2 = 625 m³"],tr:["طرح BS بدل جمعه.","الخلط بين Bearing و Azimuth.","إشارة تصحيح الحرارة (الشريط الطويل يقرأ أقل)."]},
+wre:{c:["الهيدرولوجيا: Rational Q = CiA ، وطريقة SCS بمعامل CN.","القنوات المفتوحة: Manning ، العمق الحرج yc = (q²/g)^(1/3) ، ورقم فرود.","الأنابيب والمضخات: Darcy أو Hazen-Williams ، والقدرة P = γQH/η.","المياه الجوفية: Darcy Q = KiA.","جودة المياه: BOD ، العسر كـ CaCO₃ ، الحمل الكتلي mg/L × m³/d /1000.","المعالجة: تخثير → تلبيد → ترسيب → ترشيح → تعقيم ، والصرف: حمأة منشطة و F/M."],ex:["مضخة ترفع 0.05 m³/s لارتفاع 30 m بكفاءة 75%. القدرة؟","P = 9.81 × 0.05 × 30/0.75 = 19.6 kW"],tr:["P = b + y بدل b + 2y في القناة.","1.49 (US) مع وحدات SI في Manning.","نسيان معامل التخفيف في BOD."]},
+str:{c:["التحديد والاستقرار: الكمرات r − 3 ، الجمالونات m + r مقابل 2j ، وترتيب ردود الأفعال مهم.","مسار الأحمال (Load path) والمساحة المحمولة (Tributary area).","معادلات الكمرات: wL²/8 ، PL/4 ، wL²/12 للمثبت ، 5wL⁴/384EI.","الأعمدة: KL/r ، ومعادلة أويلر π²EI/(KL)².","الخرسانة (ACI 318): a = As fy/(0.85f′c b) ، φMn = 0.9 As fy (d − a/2) ، Vc = 0.17√f′c bw d.","الحديد (AISC LRFD): خضوع 0.9FyAg ، كسر 0.75FuAe. تركيبات الأحمال 1.2D + 1.6L."],ex:["كمرة بسيطة 8 m عليها 15 kN/m. أقصى عزم؟","M = 15 × 64/8 = 120 kN·m"],tr:["معادلات الكمرة البسيطة لكمرة مثبتة.","نسيان φ أو الخلط بين Vc و φVc.","h بدل d في حسابات الخرسانة."]},
+geo:{c:["علاقات الأطوار: Se = wGs ، n = e/(1+e) ، γd = γ/(1+w).","التصنيف USCS: المار من No. 200 ، LL ، PI وخط A.","الدمك: Proctor ، والدمك النسبي RC.","الإجهاد الفعال σ′ = σ − u ، ومقاومة القص τ = c′ + σ′ tan φ′.","التدعيم: الهبوط Cc H/(1+e₀) log(…) ، والزمن t = Tv Hdr²/cv.","الضغط الجانبي Ka, Kp, K₀ ، وقدرة التحمل (Terzaghi) ، واستقرار المنحدرات."],ex:["γsat = 19 ، المياه عند 2 m ، σ′ عند 6 m (γ فوق المياه 17)؟","σ = 34 + 76 = 110 ؛ u = 39.2 ؛ σ′ = 70.8 kPa"],tr:["حساب u من سطح الأرض بدل منسوب المياه.","ln بدل log في الهبوط.","Hdr = H لطبقة تصرّف من الجهتين."]},
+tr:{c:["مسافة التوقف SSD بالنظامين (SI و US).","المنحنيات الأفقية: L ، T ، والميل الجانبي e + f = V²/127R.","المنحنيات الرأسية: نقطة القمة x = g₁L/(g₁ − g₂).","المرور: q = kv ، الفاصل h = 3600/q ، PHF ، ونموذج Greenshields.","الإشارات: زمن الأصفر Y = t + V/(2a). الرصف: ESAL. التخطيط: النموذج رباعي الخطوات."],ex:["R = 300 m ، V = 90 km/h ، f = 0.12. e؟","e = 8100/(127×300) − 0.12 = 0.093"],tr:["الخلط بين طول المماس وطول المنحنى.","نسيان تحويل الميل من نسبة مئوية.","معادلة SI مع سرعة بالـ mph."]},
+cm:{c:["الإنتاجية = حجم الدلو × الدورات/ساعة × الكفاءة × المعاملات.","الانتفاش (Swell): الحجم المفكك = حجم الطبيعة × (1 + swell). 1 yd³ = 27 ft³.","CPM: الحساب الأمامي والخلفي، Total float و Free float.","القيمة المكتسبة: CV = EV − AC ، SV = EV − PV ، CPI ، SPI.","العقود والمخاطر، السلامة (OSHA: الخنادق ≥ 5 ft) ، وقراءة الرسومات والمقاييس."],ex:["EV = 400k ، AC = 500k ، PV = 450k. CPI و SPI؟","CPI = 0.80 ، SPI = 0.89"],tr:["نسيان معامل الكفاءة.","الخلط بين Total float و Free float.","القسمة على 9 بدل 27 للياردة المكعبة."]}
+};
+
+/* ===================== STORAGE ===================== */
+const KEY="fecivil.v1";
+let DB={attempts:[],errs:[],rev:{}};
+try{const s=localStorage.getItem(KEY);if(s)DB=Object.assign(DB,JSON.parse(s));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+const DAY=86400000, INTERVALS=[1,3,7,14,30];
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d.getTime();};
+function record(id,ok,sec,mode){
+  DB.attempts.push({id,ok,sec:Math.round(sec),mode,ts:Date.now()});
+  const r=DB.rev[id];
+  if(!ok){DB.rev[id]={stage:0,due:today()+DAY};}
+  else if(r && r.due<=today()+DAY-1){
+    const st=r.stage+1; if(st>=INTERVALS.length) delete DB.rev[id]; else DB.rev[id]={stage:st,due:today()+INTERVALS[st]*DAY};
+  }
+  save();
+}
+function logErr(id,type,mode){
+  const ex=DB.errs.find(e=>e.id===id && e.ts>Date.now()-3600000);
+  if(ex){ex.type=type;} else DB.errs.push({id,type,mode,ts:Date.now()});
+  save();
+}
+
+/* ===================== HELPERS ===================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const fmtHMS=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return [h,m,x].map(v=>String(v).padStart(2,"0")).join(":");};
+const fmtMS=s=>{s=Math.max(0,Math.floor(s));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");};
+const fmtDate=ts=>new Date(ts).toLocaleDateString("ar-SA-u-nu-latn",{day:"numeric",month:"short"});
+const hasAns=v=>v!==undefined&&v!==null&&v!==""&&!(Array.isArray(v)&&!v.length);
+function isCorrect(q,v){
+  if(!hasAns(v))return false;
+  if(q.type==="multi")return Array.isArray(v)&&v.length===q.a.length&&q.a.every(i=>v.includes(i));
+  if(q.type==="num"){const x=parseFloat(String(v).replace(/,/g,""));return isFinite(x)&&Math.abs(x-q.a)<=(q.tol||0.01)*Math.abs(q.a)+1e-9;}
+  return v===q.a;
+}
+function fmtAns(q,v){
+  if(!hasAns(v))return "—";
+  if(q.type==="multi")return v.slice().sort().map(i=>LTR[i]).join(", ");
+  if(q.type==="num")return esc(v)+(q.unit?" "+esc(q.unit):"");
+  return LTR[v]+") "+esc(q.o[v]);
+}
+function fmtKey(q){
+  if(q.type==="multi")return q.a.map(i=>LTR[i]).join(", ");
+  if(q.type==="num")return q.a+(q.unit?" "+esc(q.unit):"")+" (±"+Math.round((q.tol||0.01)*1000)/10+"%)";
+  return LTR[q.a]+") "+esc(q.o[q.a]);
+}
+const instr=q=>q.type==="multi"?"Select all that apply.":q.type==="num"?"Enter your numerical answer.":"";
+
+function topicStats(){
+  const st={};Object.keys(TOPICS).forEach(k=>st[k]={n:0,ok:0,sec:0});
+  DB.attempts.forEach(a=>{const q=QBY[a.id];if(!q)return;const s=st[q.t];s.n++;s.ok+=a.ok?1:0;s.sec+=a.sec;});
+  Object.values(st).forEach(s=>{s.acc=s.n?s.ok/s.n:0;s.avg=s.n?s.sec/s.n:0;
+    s.rate=s.n<3?0:s.acc>=.9?5:s.acc>=.8?4:s.acc>=.65?3:s.acc>=.5?2:1;
+    s.pri=s.rate===0?"—":s.rate<=1?"P1":s.rate===2?"P2":s.rate===3?"P3":"P4";});
+  return st;
+}
+function overall(){
+  const at=DB.attempts.filter(a=>QBY[a.id]);
+  const n=at.length, ok=at.filter(a=>a.ok).length, sec=at.reduce((s,a)=>s+a.sec,0);
+  const st=topicStats(); let wCov=0,wAcc=0;
+  Object.keys(MOCK).forEach(k=>{if(st[k].n>=3){wCov+=MOCK[k];wAcc+=MOCK[k]*st[k].acc;}});
+  const accCov=wCov?wAcc/wCov:0, speed=n?Math.min(1,TARGET_SEC/(sec/n)):0;
+  const readiness=Math.round(100*(wCov/110)*(0.8*accCov+0.2*speed));
+  const due=Object.entries(DB.rev).filter(([id,r])=>QBY[id]&&r.due<=today()).length;
+  return {n,ok,acc:n?ok/n:0,avg:n?sec/n:0,readiness,due};
+}
+function kpiHTML(){
+  const o=overall();
+  return `<div class="kpi"><b>${o.readiness}</b><span>FE Readiness /100</span></div>
+  <div class="kpi"><b>${o.n?Math.round(o.acc*100)+"%":"—"}</b><span>الدقة (${o.ok}/${o.n})</span></div>
+  <div class="kpi"><b>${o.n?fmtMS(o.avg):"—"}</b><span>متوسط زمن السؤال · الهدف ${fmtMS(TARGET_SEC)}</span></div>
+  <div class="kpi"><b>${o.due}</b><span>مراجعات مستحقة اليوم</span></div>`;
+}
+
+/* ===================== VIEWS ===================== */
+function show(view){
+  ["home","learn","train","stats","result"].forEach(v=>$("#v-"+v).hidden=v!==view);
+  document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===view?"true":"false"));
+  if(view==="home") $("#homeKpis").innerHTML=kpiHTML();
+  if(view==="learn") renderLearn();
+  if(view==="stats") renderStats();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{ if(b.dataset.view==="train" && !TR.q){TR.pool=null;startTraining();} else show(b.dataset.view); });
+
+const sel=new Set(Object.keys(TOPICS));
+function renderChips(){
+  $("#topicChips").innerHTML=Object.keys(TOPICS).map(k=>`<button class="chip" data-k="${k}" aria-pressed="${sel.has(k)}">${TOPIC_AR[k]}</button>`).join("");
+  document.querySelectorAll("#topicChips .chip").forEach(c=>c.onclick=()=>{const k=c.dataset.k;sel.has(k)?sel.delete(k):sel.add(k);renderChips();});
+}
+renderChips();
+$("#allTopics").onclick=()=>{Object.keys(TOPICS).forEach(k=>sel.add(k));renderChips();};
+$("#exPreset").onchange=e=>$("#customRow").hidden=e.target.value!=="custom";
+try{$("#exName").value=localStorage.getItem(KEY+".name")||"";}catch(e){}
+
+let learnKey="math";
+function renderLearn(){
+  $("#learnTabs").innerHTML=Object.keys(TOPICS).map(k=>`<button class="chip" data-k="${k}" aria-pressed="${k===learnKey}">${TOPIC_AR[k]}</button>`).join("");
+  document.querySelectorAll("#learnTabs .chip").forEach(c=>c.onclick=()=>{learnKey=c.dataset.k;renderLearn();});
+  const L1=LESSONS[learnKey], st=topicStats()[learnKey], nq=Q.filter(q=>q.t===learnKey).length;
+  const refIds=[...new Set(Q.filter(q=>q.t===learnKey).map(q=>q.r))];
+  $("#learnBody").innerHTML=`
+    <div class="row" style="justify-content:space-between"><div><div class="label">${TOPICS[learnKey]}</div><h2>${TOPIC_AR[learnKey]}</h2></div>
+      <span class="muted" style="font-size:13px"><span class="num">${RANGE[learnKey]}</span> سؤال في الامتحان · ${nq} في البنك · أداؤك: ${st.n?Math.round(st.acc*100)+"% من "+st.n:"لم تتدرب بعد"}</span></div>
+    <div><h3 style="font-size:15px;margin-bottom:6px">الأفكار والمعادلات الأساسية</h3><ul style="margin:0;padding-inline-start:20px;display:grid;gap:6px">${L1.c.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    <div class="fb ok"><strong>مثال محلول</strong><div>${esc(L1.ex[0])}</div><div class="mono" style="direction:ltr;text-align:left">${esc(L1.ex[1])}</div></div>
+    <div class="hint"><b>أخطاء شائعة:</b><ul style="margin:6px 0 0;padding-inline-start:20px">${L1.tr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    <div class="row"><button class="btn primary" id="lTrain">تدرّب على هذا الموضوع الآن</button>${refIds.map(r=>`<button class="btn" data-ref="${r}">${esc(REF.find(x=>x.id===r).t)}</button>`).join("")}</div>`;
+  $("#lTrain").onclick=()=>{sel.clear();sel.add(learnKey);renderChips();$("#trSrc").value="topics";TR.pool=null;startTraining();};
+  document.querySelectorAll("#learnBody [data-ref]").forEach(b=>b.onclick=()=>openRef(b.dataset.ref));
+}
+
+function modal(html,bind){$("#modalBox").innerHTML=html;$("#modal").hidden=false;bind&&bind();}
+function closeModal(){$("#modal").hidden=true;}
+
+/* ===================== REFERENCE ===================== */
+function renderRef(term,focusId){
+  const t=(term||"").trim().toLowerCase();
+  const hl=s=>{const e=esc(s);if(!t)return e;const i=e.toLowerCase().indexOf(t);return i<0?e:e.slice(0,i)+"<mark>"+e.slice(i,i+t.length)+"</mark>"+e.slice(i+t.length);};
+  const list=REF.filter(r=>!t||r.t.toLowerCase().includes(t)||r.l.some(x=>x.toLowerCase().includes(t)));
+  $("#refBody").innerHTML=list.length?list.map(r=>`<div class="refsec${r.id===focusId?" hit":""}" id="ref-${r.id}"><h4>${hl(r.t)}</h4><ul>${r.l.map(x=>`<li>${hl(x)}</li>`).join("")}</ul></div>`).join(""):`<p class="muted">No match. Try a shorter keyword.</p>`;
+  if(focusId){const el=document.getElementById("ref-"+focusId);el&&el.scrollIntoView({block:"start"});}
+}
+function openRef(focusId){$("#refDrawer").hidden=false;$("#refSearch").value="";renderRef("",focusId);if(!focusId)$("#refSearch").focus();}
+$("#refClose").onclick=()=>$("#refDrawer").hidden=true;
+$("#refSearch").oninput=e=>renderRef(e.target.value);
+
+/* ===================== CALCULATOR ===================== */
+const KEYS=[["sin(","cos(","tan(","√(","^"],["asin(","acos(","atan(","log(","ln("],["7","8","9","(",")"],["4","5","6","×","÷"],["1","2","3","+","−"],["0",".","π","E","Ans"],["C","⌫","x10^","="]];
+let ANS=0;
+$("#calcKeys").innerHTML=KEYS.flat().map(k=>`<button data-k="${k}" class="${"×÷+−^".includes(k)&&k.length===1?"op":k==="="?"eq":""}">${k}</button>`).join("");
+function calcEval(src){
+  let s=src.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/\^/g,"**").replace(/π/g,"PI").replace(/√\(/g,"sqrt(").replace(/x10\*\*/g,"*10**").replace(/Ans/g,"ANS");
+  s=s.replace(/\basin\(/g,"ASIN(").replace(/\bacos\(/g,"ACOS(").replace(/\batan\(/g,"ATAN(").replace(/\bsin\(/g,"SIN(").replace(/\bcos\(/g,"COS(").replace(/\btan\(/g,"TAN(").replace(/\blog\(/g,"LOG(").replace(/\bln\(/g,"LN(");
+  if(!/^[0-9+\-*/().\sA-Z_a-z]*$/.test(s)) throw 0;
+  const ids=(s.match(/[A-Za-z_]+/g)||[]);
+  const ok=["SIN","COS","TAN","ASIN","ACOS","ATAN","LOG","LN","sqrt","PI","E","ANS"];
+  if(ids.some(i=>!ok.includes(i))) throw 0;
+  const r=Math.PI/180;
+  const f=new Function("SIN","COS","TAN","ASIN","ACOS","ATAN","LOG","LN","sqrt","PI","E","ANS","return ("+(s||"0")+")");
+  const v=f(x=>Math.sin(x*r),x=>Math.cos(x*r),x=>Math.tan(x*r),x=>Math.asin(x)/r,x=>Math.acos(x)/r,x=>Math.atan(x)/r,Math.log10,Math.log,Math.sqrt,Math.PI,Math.E,ANS);
+  if(typeof v!=="number"||!isFinite(v)) throw 0; return v;
+}
+const fmtNum=v=>Math.abs(v)>=1e9||(Math.abs(v)<1e-4&&v!==0)?v.toExponential(6):String(+v.toPrecision(10));
+function calcPress(k){
+  const inp=$("#calcIn");
+  if(k==="C"){inp.value="";$("#calcOut").textContent="0";return;}
+  if(k==="⌫"){inp.value=inp.value.slice(0,-1);return;}
+  if(k==="="){try{const v=calcEval(inp.value);ANS=v;$("#calcOut").textContent=fmtNum(v);}catch(e){$("#calcOut").textContent="Syntax error";}return;}
+  inp.value+=k;
+}
+$("#calcKeys").onclick=e=>{const b=e.target.closest("button");if(b)calcPress(b.dataset.k);};
+$("#calcIn").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();calcPress("=");}};
+$("#calcClose").onclick=()=>$("#calc").hidden=true;
+function toggleCalc(){$("#calc").hidden=!$("#calc").hidden;if(!$("#calc").hidden)$("#calcIn").focus();}
+
+/* ===================== EXAM ===================== */
+let EX=null, tick=null;
+const BREAK_SEC=25*60;
+function alloc(n){
+  const keys=Object.keys(MOCK), cnt={}, frac=[]; let used=0;
+  keys.forEach(k=>{const raw=MOCK[k]*n/110;cnt[k]=Math.floor(raw);used+=cnt[k];frac.push([raw-cnt[k],k]);});
+  frac.sort((a,b)=>b[0]-a[0]);for(let i=0;used<n&&i<frac.length;i++,used++)cnt[frac[i][1]]++;
+  return cnt;
+}
+function drawExam(n){
+  const cnt=alloc(n), byT={}, picked=[];
+  shuffle(Q).forEach(q=>(byT[q.t]=byT[q.t]||[]).push(q.id));
+  Object.keys(cnt).forEach(k=>{const take=(byT[k]||[]).splice(0,cnt[k]);picked.push(...take);});
+  const rest=shuffle(Object.values(byT).flat());
+  while(picked.length<n&&rest.length)picked.push(rest.shift());
+  return shuffle(picked);
+}
+$("#startExam").onclick=()=>{
+  const p=$("#exPreset").value; let n,min,split=false;
+  if(p==="mini"){n=20;min=58}else if(p==="half"){n=55;min=160}else if(p==="full"){n=110;min=320;split=true}else{n=Math.min(Q.length,Math.max(5,+$("#exN").value||20));min=Math.max(5,+$("#exMin").value||60);}
+  const name=$("#exName").value.trim(); try{localStorage.setItem(KEY+".name",name);}catch(e){}
+  const qs=drawExam(n);
+  EX={qs,ans:{},flag:{},cur:0,dur:min*60,start:Date.now(),pause:0,onBreak:false,breakStart:0,spent:{},enter:Date.now(),name:name||"Candidate",done:false,
+      secs:split?[[0,55],[55,qs.length]]:[[0,qs.length]],s:0};
+  $("#coach").hidden=true;$("#exam").hidden=false;
+  $("#xCand").textContent="Candidate: "+EX.name+"  ·  "+qs.length+" questions  ·  "+fmtHMS(EX.dur);
+  renderQ();clearInterval(tick);tick=setInterval(updTimer,1000);updTimer();
+};
+function examElapsed(){let t=Date.now()-EX.start-EX.pause;if(EX.onBreak)t-=Math.min(Date.now()-EX.breakStart,BREAK_SEC*1000);return t/1000;}
+function leftSec(){return EX.dur-examElapsed();}
+function updTimer(){
+  if(!EX||EX.done)return; const s=leftSec();
+  $("#xTimer").textContent=fmtHMS(s);$("#xTimer").classList.toggle("low",s<300);
+  $("#xSec").textContent=EX.secs.length>1?(EX.onBreak?"Scheduled Break":"Section "+(EX.s+1)+" of 2")+"  ·":"";
+  if(EX.onBreak){const b=(Date.now()-EX.breakStart)/1000, el=$("#brkLeft");
+    if(el){el.textContent=b<BREAK_SEC?fmtMS(BREAK_SEC-b):"+"+fmtMS(b-BREAK_SEC);$("#brkOver").hidden=b<BREAK_SEC;}}
+  if(s<=0) finishExam(true);
+}
+const secRange=()=>EX.secs[EX.s];
+function bank(){if(EX.onBreak)return;const id=EX.qs[EX.cur];EX.spent[id]=(EX.spent[id]||0)+(Date.now()-EX.enter)/1000;EX.enter=Date.now();}
+function go(i){bank();const [a,b]=secRange();EX.cur=Math.max(a,Math.min(b-1,i));renderQ();}
+function setTools(on){$("#xTools").hidden=!on;$("#xFoot").hidden=!on;}
+function answeredIn(range){let c=0;for(let i=range[0];i<range[1];i++)if(hasAns(EX.ans[EX.qs[i]]))c++;return c;}
+function optHTML(q,v,locked,reveal){
+  const multi=q.type==="multi";
+  return `<div class="opts" role="${multi?"group":"radiogroup"}">${q.o.map((o,i)=>{
+    const on=multi?(Array.isArray(v)&&v.includes(i)):v===i;
+    let c="";if(reveal){const right=multi?q.a.includes(i):i===q.a;if(right)c=" right";else if(on)c=" wrong";}
+    return `<button class="opt${multi?" sq":""}${c}" role="${multi?"checkbox":"radio"}" aria-checked="${on}" data-i="${i}" ${locked?"disabled":""}><span class="dot">${LTR[i]}</span><span class="txt">${esc(o)}</span></button>`;}).join("")}</div>`;
+}
+function renderQ(){
+  setTools(true);
+  const q=QBY[EX.qs[EX.cur]],[a,b]=secRange();
+  $("#xQn").textContent=`Question ${EX.cur+1} of ${EX.qs.length}`;
+  $("#xFlag").setAttribute("aria-pressed",!!EX.flag[q.id]);
+  $("#xPrev").disabled=EX.cur===a;$("#xNext").disabled=EX.cur===b-1;
+  $("#xEnd").textContent=EX.s<EX.secs.length-1?"End Section 1":"End Exam";
+  const v=EX.ans[q.id];
+  const body=q.type==="num"
+    ?`<div class="numbox"><input id="numIn" type="text" inputmode="decimal" autocomplete="off" value="${esc(v||"")}" aria-label="Numerical answer"><span class="mono">${esc(q.unit||"")}</span></div>`
+    :optHTML(q,v,false,false);
+  $("#xBody").innerHTML=`<div class="qcard ltr">
+    <div class="qmeta"><span class="pill">${TOPICS[q.t]}</span>${EX.flag[q.id]?'<span class="pill flag">Flagged</span>':""}<span class="muted" id="xAnsCt" style="margin-left:auto;font-size:13px">${answeredIn([a,b])} of ${b-a} answered in this section</span></div>
+    <div class="stem">${esc(q.s)}</div>
+    ${instr(q)?`<div class="instr">${instr(q)}</div>`:""}
+    ${body}
+  </div>`;
+  if(q.type==="num"){
+    const inp=$("#numIn");inp.oninput=()=>{const t=inp.value.trim();if(t)EX.ans[q.id]=t;else delete EX.ans[q.id];$("#xAnsCt").textContent=`${answeredIn([a,b])} of ${b-a} answered in this section`;};
+  }else document.querySelectorAll("#xBody .opt").forEach(btn=>btn.onclick=()=>{
+    const i=+btn.dataset.i;
+    if(q.type==="multi"){const cur=Array.isArray(EX.ans[q.id])?EX.ans[q.id].slice():[];const k=cur.indexOf(i);k<0?cur.push(i):cur.splice(k,1);if(cur.length)EX.ans[q.id]=cur;else delete EX.ans[q.id];}
+    else{if(EX.ans[q.id]===i)delete EX.ans[q.id];else EX.ans[q.id]=i;}
+    renderQ();});
+  $("#xBody").scrollTop=0;
+}
+$("#xPrev").onclick=()=>go(EX.cur-1);
+$("#xNext").onclick=()=>go(EX.cur+1);
+$("#xFlag").onclick=()=>{const id=EX.qs[EX.cur];EX.flag[id]=!EX.flag[id];if(!EX.flag[id])delete EX.flag[id];renderQ();};
+$("#xRef").onclick=()=>openRef();
+$("#xCalc").onclick=toggleCalc;
+$("#xReview").onclick=reviewScreen;
+$("#xEnd").onclick=confirmEnd;
+function reviewScreen(){
+  bank();
+  const [a,b]=secRange(), ids=EX.qs.slice(a,b);
+  const ans=ids.filter(id=>hasAns(EX.ans[id])).length, fl=ids.filter(id=>EX.flag[id]).length;
+  $("#xQn").textContent="Review Screen"+(EX.secs.length>1?" — Section "+(EX.s+1):"");
+  $("#xBody").innerHTML=`<div class="qcard ltr">
+    <h3>Review Screen${EX.secs.length>1?" — Section "+(EX.s+1):""}</h3>
+    <div class="legend"><span><i style="background:var(--sel);border-color:var(--accent)"></i>Answered (${ans})</span><span><i></i>Unanswered (${ids.length-ans})</span><span><i style="background:var(--flag);border-color:var(--flag);border-radius:50%"></i>Flagged (${fl})</span></div>
+    <div class="row"><button class="btn" data-f="all">Review all</button><button class="btn" data-f="un">Review unanswered</button><button class="btn" data-f="fl">Review flagged</button></div>
+    <div class="rgrid">${ids.map((id,k)=>`<button class="rtile${hasAns(EX.ans[id])?" ans":""}${EX.flag[id]?" flg":""}" data-i="${a+k}">${a+k+1}</button>`).join("")}</div>
+  </div>`;
+  document.querySelectorAll(".rtile").forEach(btn=>btn.onclick=()=>{EX.cur=+btn.dataset.i;EX.enter=Date.now();renderQ();});
+  document.querySelectorAll("[data-f]").forEach(btn=>btn.onclick=()=>{
+    const f=btn.dataset.f;const k=ids.findIndex(id=>f==="all"||(f==="un"&&!hasAns(EX.ans[id]))||(f==="fl"&&EX.flag[id]));
+    EX.cur=a+(k<0?0:k);EX.enter=Date.now();renderQ();});
+}
+function confirmEnd(){
+  const [a,b]=secRange(), ids=EX.qs.slice(a,b);
+  const un=ids.filter(id=>!hasAns(EX.ans[id])).length, fl=ids.filter(id=>EX.flag[id]).length;
+  const mid=EX.s<EX.secs.length-1;
+  modal(`<h3>${mid?"End Section 1?":"End the exam?"}</h3><p class="muted" style="margin:0">This section has <b>${un}</b> unanswered and <b>${fl}</b> flagged question(s). Time remaining: <span class="mono">${fmtHMS(leftSec())}</span>. ${mid?"After you end Section 1 you cannot return to it. Your optional 25-minute break starts next.":"Once you end, you cannot return."}</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" id="mNo">Return</button><button class="btn warn" id="mYes">${mid?"End section":"End exam"}</button></div>`,()=>{
+    $("#mNo").onclick=closeModal;$("#mYes").onclick=()=>{closeModal();mid?startBreak():finishExam(false);};});
+  $("#modalBox").style.direction="ltr";
+}
+function startBreak(){
+  bank();EX.onBreak=true;EX.breakStart=Date.now();setTools(false);
+  $("#refDrawer").hidden=true;$("#calc").hidden=true;
+  $("#xBody").innerHTML=`<div class="qcard ltr brk">
+    <div class="label">Scheduled break</div>
+    <div class="big" id="brkLeft">${fmtMS(BREAK_SEC)}</div>
+    <p class="muted" style="margin:0;max-width:52ch">Section 1 is now locked. Your exam clock is paused for up to 25 minutes. Any break time beyond 25 minutes is deducted from your remaining exam time.</p>
+    <p id="brkOver" class="pill bad" hidden>Break time exceeded — exam time is running</p>
+    <button class="btn primary" id="brkEnd">Begin Section 2</button>
+  </div>`;
+  $("#brkEnd").onclick=endBreak;updTimer();
+}
+function endBreak(){
+  const b=Date.now()-EX.breakStart;EX.pause+=Math.min(b,BREAK_SEC*1000);EX.onBreak=false;
+  EX.s=1;EX.cur=EX.secs[1][0];EX.enter=Date.now();renderQ();updTimer();
+}
+function finishExam(timeout){
+  if(EX.done)return; bank(); EX.done=true; clearInterval(tick);
+  $("#refDrawer").hidden=true;$("#calc").hidden=true;
+  EX.qs.forEach(id=>record(id,isCorrect(QBY[id],EX.ans[id]),EX.spent[id]||0,"exam"));
+  $("#exam").hidden=true;$("#coach").hidden=false;renderResult(timeout);show("result");
+}
+function renderResult(timeout){
+  const n=EX.qs.length,ok=EX.qs.filter(id=>isCorrect(QBY[id],EX.ans[id])).length,pct=Math.round(ok/n*100);
+  const used=Math.min(EX.dur,examElapsed());
+  const per={};EX.qs.forEach(id=>{const t=QBY[id].t;per[t]=per[t]||{n:0,ok:0,sec:0};per[t].n++;per[t].ok+=isCorrect(QBY[id],EX.ans[id])?1:0;per[t].sec+=EX.spent[id]||0;});
+  const slow=EX.qs.filter(id=>(EX.spent[id]||0)>TARGET_SEC*1.5).length;
+  const pass=pct>=70;
+  $("#v-result").innerHTML=`
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="label">Exam result</div><h2>نتيجة المحاكاة ${timeout?'<span class="pill bad">انتهى الوقت</span>':""}</h2></div>
+      <span class="pill ${pass?"ok":"bad"}">${pass?"فوق":"تحت"} هدف 70%</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b>${pct}%</b><span>الدرجة (${ok}/${n})</span></div>
+      <div class="kpi"><b>${fmtHMS(used)}</b><span>الوقت المستخدم من ${fmtHMS(EX.dur)}</span></div>
+      <div class="kpi"><b>${fmtMS(used/n)}</b><span>متوسط الزمن/سؤال · الهدف ${fmtMS(TARGET_SEC)}</span></div>
+      <div class="kpi"><b>${slow}</b><span>أسئلة تجاوزت ${fmtMS(TARGET_SEC*1.5)}</span></div>
+    </div>
+    <p class="note" style="margin:0">NCEES لا تنشر درجة النجاح، و70% هدف تدريبي بهامش أمان. الأسئلة الخاطئة أُضيفت لجدول المراجعة المتباعدة. صنّف نوع كل خطأ أدناه ليدخل سجل الأخطاء.</p>
+    <div class="row"><button class="btn primary" id="rTrain">تدريب على أخطاء هذا الامتحان</button><button class="btn" id="rHome">الرئيسية</button></div>
+  </div>
+  <div class="panel"><h2>حسب الموضوع</h2><div class="tbl-wrap"><table><tr><th>الموضوع</th><th>الدقة</th><th></th><th>متوسط الزمن</th></tr>
+    ${Object.entries(per).sort((x,y)=>x[1].ok/x[1].n-y[1].ok/y[1].n).map(([t,s])=>`<tr><td>${TOPIC_AR[t]}</td><td class="num">${s.ok}/${s.n}</td><td><div class="bar"><i style="width:${s.ok/s.n*100}%"></i></div></td><td class="num">${fmtMS(s.sec/s.n)}</td></tr>`).join("")}
+  </table></div></div>
+  <div class="panel"><h2>مراجعة الأسئلة</h2><div style="display:grid;gap:10px">
+    ${EX.qs.map((id,i)=>{const q=QBY[id],u=EX.ans[id],good=isCorrect(q,u);return `<div class="res-q">
+      <div class="row" style="justify-content:space-between"><span class="row"><b class="num">#${i+1}</b><span class="pill ${good?"ok":"bad"}">${good?"صحيح":!hasAns(u)?"لم يُجب":"خطأ"}</span><span class="muted" style="font-size:13px">${TOPIC_AR[q.t]} · <span class="num">${fmtMS(EX.spent[id]||0)}</span></span>${EX.flag[id]?'<span class="pill flag">معلَّم</span>':""}</span>
+      ${good?"":`<select data-err="${id}" aria-label="نوع الخطأ" style="padding:4px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface2)"><option value="">صنّف الخطأ…</option>${ERR_TYPES.map(t=>`<option value="${t}">${ERR_AR[t]}</option>`).join("")}</select>`}</div>
+      <div class="ltr stem" style="font-size:14.5px">${esc(q.s)}</div>
+      <div class="ltr muted" style="font-size:14px">Your answer: <b>${fmtAns(q,u)}</b> · Correct: <b style="color:var(--ok)">${fmtKey(q)}</b></div>
+      <details><summary>الحل والشرح</summary><div class="fb ${good?"ok":"bad"}" style="margin-top:8px"><div class="ex">${esc(q.e)}</div></div></details>
+    </div>`;}).join("")}
+  </div></div>`;
+  document.querySelectorAll("[data-err]").forEach(s=>s.onchange=()=>{if(s.value)logErr(s.dataset.err,s.value,"exam");});
+  $("#rHome").onclick=()=>show("home");
+  const wrong=EX.qs.filter(id=>!isCorrect(QBY[id],EX.ans[id]));
+  $("#rTrain").onclick=()=>{TR.pool=wrong.slice();startTraining(true);};
+  $("#rTrain").disabled=!wrong.length;
+}
+
+/* ===================== TRAINING ===================== */
+const TR={q:null,pool:null,start:0,hints:0,picked:undefined,skipped:false,done:false,n:0,ok:0,clock:null,last:null};
+$("#startTrain").onclick=()=>{TR.pool=null;startTraining();};
+function pickNext(sameTopic){
+  if(TR.pool&&TR.pool.length){return QBY[TR.pool.shift()];}
+  const src=$("#trSrc").value;
+  const recent=new Set(DB.attempts.slice(-15).map(a=>a.id));
+  let cands;
+  if(sameTopic&&TR.last){cands=Q.filter(q=>q.t===TR.last.t&&q.id!==TR.last.id);}
+  else if(src==="due"){cands=Q.filter(q=>DB.rev[q.id]&&DB.rev[q.id].due<=today());if(!cands.length)cands=Q.filter(q=>sel.has(q.t));}
+  else if(src==="weak"){const st=topicStats();const order=Object.keys(st).sort((a,b)=>(st[a].n<3?-1:st[a].acc)-(st[b].n<3?-1:st[b].acc));const pickT=order.slice(0,3);cands=Q.filter(q=>pickT.includes(q.t));}
+  else cands=Q.filter(q=>sel.has(q.t));
+  if(!cands.length)cands=Q.slice();
+  const notLast=cands.filter(q=>!TR.last||q.id!==TR.last.id);
+  const fresh=notLast.filter(q=>!recent.has(q.id));
+  const list=fresh.length?fresh:(notLast.length?notLast:cands);
+  const due=list.filter(q=>DB.rev[q.id]);
+  const base=due.length&&Math.random()<.6?due:list;
+  return base[Math.floor(Math.random()*base.length)];
+}
+function startTraining(fromExam){
+  TR.n=0;TR.ok=0;
+  show("train"); nextTrain(false);
+}
+function nextTrain(same){
+  TR.q=pickNext(same);TR.last=TR.q;TR.hints=0;TR.picked=undefined;TR.skipped=false;TR.done=false;TR.start=Date.now();
+  clearInterval(TR.clock);TR.clock=setInterval(()=>{if(!TR.done){const s=(Date.now()-TR.start)/1000;$("#trClock").textContent=fmtMS(s)+" / "+fmtMS(TARGET_SEC);$("#trClock").className="pill num"+(s>TARGET_SEC?" bad":"");}},1000);
+  renderTrain();
+}
+function renderTrain(){
+  const q=TR.q, good=TR.done&&!TR.skipped&&isCorrect(q,TR.picked);
+  $("#trTopic").textContent=TOPIC_AR[q.t]+" · "+TOPICS[q.t];
+  $("#trLevel").textContent="المستوى "+q.lv+(q.type==="multi"?" · اختيار متعدد":q.type==="num"?" · إدخال رقمي":"");
+  $("#trScore").textContent=TR.n?`الجلسة: ${TR.ok}/${TR.n}`:"";
+  if(!TR.done)$("#trClock").textContent=fmtMS((Date.now()-TR.start)/1000)+" / "+fmtMS(TARGET_SEC);
+  const answerBody=q.type==="num"
+    ?`<div class="numbox ltr"><input id="trNum" type="text" inputmode="decimal" autocomplete="off" value="${esc(TR.picked||"")}" ${TR.done?"disabled":""} aria-label="Numerical answer"><span class="mono">${esc(q.unit||"")}</span></div>`
+    :`<div class="ltr">${optHTML(q,TR.picked,TR.done,TR.done)}</div>`;
+  const fb=TR.done?(()=>{const sec=Math.round(TR.sec);return `
+    <div class="fb ${good?"ok":"bad"}">
+      <strong>${good?"إجابة صحيحة":"إجابة خاطئة"}</strong>
+      <div class="ltr" style="direction:ltr;text-align:left;font-size:14px">Correct: <b>${fmtKey(q)}</b>${TR.skipped?"":" · Yours: "+fmtAns(q,TR.picked)}</div>
+      <span class="muted" style="font-size:13px">الزمن: <span class="num">${fmtMS(sec)}</span> ${sec>TARGET_SEC?"· تجاوزت الهدف ("+fmtMS(TARGET_SEC)+")":""}${TR.hints?" · استخدمت "+TR.hints+" تلميح":""}</span>
+      <div class="ex">${esc(q.e)}</div>
+      <div><button class="btn" id="trSeeRef">افتح القسم في المعادلات</button></div>
+    </div>
+    ${good?"":`<div class="field rtl"><label for="trErr">ما نوع خطئك؟ (يُسجَّل في سجل الأخطاء)</label><select id="trErr"><option value="">اختر…</option>${ERR_TYPES.map(t=>`<option value="${t}">${ERR_AR[t]} — ${t}</option>`).join("")}</select></div>`}
+    <div class="row rtl" style="justify-content:flex-start">
+      ${good?`<button class="btn primary" id="trNext">السؤال التالي</button><button class="btn" id="trSame">سؤال آخر من نفس الموضوع</button>`:`<button class="btn primary" id="trSame">سؤال مشابه لتثبيت الفكرة</button><button class="btn" id="trNext">سؤال من موضوع آخر</button>`}
+      <button class="btn ghost" id="trEnd">إنهاء الجلسة</button>
+    </div>`;})():`
+    ${q.h.slice(0,TR.hints).map((h,i)=>`<div class="hint"><b>تلميح ${i+1}:</b> ${esc(h)}</div>`).join("")}
+    <div class="row rtl" style="justify-content:flex-start">
+      <button class="btn primary" id="trSubmit" ${hasAns(TR.picked)?"":"disabled"}>تأكيد الإجابة</button>
+      <button class="btn" id="trHint" ${TR.hints>=3?"disabled":""}>${TR.hints>=3?"لا تلميحات أخرى":"تلميح "+(TR.hints+1)+" من 3"}</button>
+      <button class="btn ghost" id="trSkip">لا أعرف — اعرض الحل</button>
+    </div>`;
+  $("#trCard").innerHTML=`
+    <div class="stem ltr">${esc(q.s)}</div>
+    ${instr(q)?`<div class="instr ltr">${instr(q)}</div>`:""}
+    ${answerBody}
+    ${fb}`;
+  if(!TR.done){
+    if(q.type==="num"){const inp=$("#trNum");inp.oninput=()=>{TR.picked=inp.value.trim();$("#trSubmit").disabled=!hasAns(TR.picked);};inp.onkeydown=e=>{if(e.key==="Enter"&&hasAns(TR.picked))submitTrain();};}
+    else document.querySelectorAll("#trCard .opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;
+      if(q.type==="multi"){const cur=Array.isArray(TR.picked)?TR.picked.slice():[];const k=cur.indexOf(i);k<0?cur.push(i):cur.splice(k,1);TR.picked=cur;}else TR.picked=i;renderTrain();});
+    $("#trSubmit").onclick=submitTrain;
+    $("#trHint").onclick=()=>{if(TR.hints<3){TR.hints++;renderTrain();}};
+    $("#trSkip").onclick=()=>{TR.skipped=true;submitTrain();};
+  }else{
+    $("#trNext").onclick=()=>nextTrain(false);
+    $("#trSame").onclick=()=>nextTrain(true);
+    $("#trEnd").onclick=()=>{clearInterval(TR.clock);TR.q=null;show("stats");};
+    $("#trSeeRef").onclick=()=>openRef(q.r);
+    const e=$("#trErr"); if(e) e.onchange=()=>{if(e.value)logErr(q.id,e.value,"train");};
+  }
+}
+function submitTrain(){
+  const q=TR.q;TR.done=true;TR.sec=(Date.now()-TR.start)/1000;
+  const good=!TR.skipped&&isCorrect(q,TR.picked);TR.n++;if(good)TR.ok++;
+  record(q.id,good,TR.sec,"train");
+  if(TR.skipped) logErr(q.id,"Conceptual","train");
+  renderTrain();
+}
+$("#trRefBtn").onclick=()=>openRef(TR.q&&TR.q.r);
+$("#trCalcBtn").onclick=toggleCalc;
+
+/* ===================== STATS ===================== */
+function renderStats(){
+  $("#stKpis").innerHTML=kpiHTML();
+  const st=topicStats();
+  $("#topicTbl").innerHTML=`<tr><th>الموضوع</th><th>أسئلة NCEES</th><th>محاولات</th><th>الدقة</th><th></th><th>متوسط الزمن</th><th>التقييم</th><th>الأولوية</th></tr>`+
+    Object.keys(TOPICS).map(k=>{const s=st[k];return `<tr><td>${TOPIC_AR[k]}<div class="muted" style="font-size:12px">${TOPICS[k]}</div></td><td class="num">${RANGE[k]}</td><td class="num">${s.n}</td><td class="num">${s.n?Math.round(s.acc*100)+"%":"—"}</td><td><div class="bar"><i style="width:${s.acc*100}%"></i></div></td><td class="num">${s.n?fmtMS(s.avg):"—"}</td><td class="num">${s.rate}</td><td><span class="pill ${s.pri==="P1"||s.pri==="P2"?"bad":s.pri==="P4"?"ok":""}">${s.pri}</span></td></tr>`;}).join("");
+  const due=Object.entries(DB.rev).filter(([id])=>QBY[id]).sort((a,b)=>a[1].due-b[1].due);
+  $("#dueList").innerHTML=due.length?`<div class="tbl-wrap"><table><tr><th>السؤال</th><th>الموضوع</th><th>المرحلة</th><th>الموعد</th></tr>${due.map(([id,r])=>`<tr><td class="num">${id}</td><td>${TOPIC_AR[QBY[id].t]}</td><td class="num">${INTERVALS[r.stage]} يوم</td><td>${r.due<=today()?'<span class="pill bad">مستحق</span>':fmtDate(r.due)}</td></tr>`).join("")}</table></div>`:`<p class="muted" style="margin:0">لا توجد مراجعات بعد. أي سؤال تخطئ فيه سيظهر هنا بموعد إعادته.</p>`;
+  const errs=DB.errs.filter(e=>QBY[e.id]).reverse();
+  const counts={};errs.forEach(e=>counts[e.type]=(counts[e.type]||0)+1);
+  $("#errTbl").innerHTML=errs.length?`<tr><th colspan="3">التكرار: ${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`${ERR_AR[t]||t} (${c})`).join(" · ")}</th></tr><tr><th>التاريخ</th><th>السؤال</th><th>النوع</th></tr>`+errs.slice(0,40).map(e=>`<tr><td>${fmtDate(e.ts)}</td><td class="num">${e.id} · ${TOPIC_AR[QBY[e.id].t]}</td><td>${ERR_AR[e.type]||e.type}</td></tr>`).join(""):`<tr><td class="muted">لا توجد أخطاء مصنّفة بعد.</td></tr>`;
+}
+$("#bkExport").onclick=()=>{
+  const t="FECIVIL1:"+btoa(unescape(encodeURIComponent(JSON.stringify(DB))));
+  const ta=$("#bkText");ta.value=t;
+  const done=m=>$("#bkMsg").textContent=m;
+  try{navigator.clipboard.writeText(t).then(()=>done("تم النسخ — الصقه في الجهاز الآخر"),()=>{ta.select();done("حدّد النص وانسخه يدوياً");});}catch(e){ta.select();done("حدّد النص وانسخه يدوياً");}
+};
+$("#bkImport").onclick=()=>{
+  const raw=$("#bkText").value.trim();
+  try{
+    if(!raw.startsWith("FECIVIL1:"))throw 0;
+    const d=JSON.parse(decodeURIComponent(escape(atob(raw.slice(9)))));
+    if(!Array.isArray(d.attempts))throw 0;
+    const seen=new Set(DB.attempts.map(a=>a.id+"|"+a.ts));
+    d.attempts.forEach(a=>{if(!seen.has(a.id+"|"+a.ts))DB.attempts.push(a);});
+    DB.attempts.sort((a,b)=>a.ts-b.ts);
+    const seenE=new Set(DB.errs.map(e=>e.id+"|"+e.ts));
+    (d.errs||[]).forEach(e=>{if(!seenE.has(e.id+"|"+e.ts))DB.errs.push(e);});
+    Object.entries(d.rev||{}).forEach(([id,r])=>{if(!DB.rev[id]||DB.rev[id].due>r.due)DB.rev[id]=r;});
+    save();renderStats();$("#bkMsg").textContent="تم الاستيراد: "+d.attempts.length+" محاولة";
+  }catch(e){$("#bkMsg").textContent="النص غير صالح. انسخه كاملاً من زر \"نسخ التقدم\" في الجهاز الآخر.";}
+};
+$("#resetBtn").onclick=()=>{$("#resetConfirm").hidden=false;};
+$("#resetNo").onclick=()=>{$("#resetConfirm").hidden=true;};
+$("#resetYes").onclick=()=>{DB={attempts:[],errs:[],rev:{}};save();$("#resetConfirm").hidden=true;renderStats();};
+
+document.addEventListener("keydown",e=>{
+  if($("#exam").hidden||!EX||EX.done||EX.onBreak||!$("#modal").hidden)return;
+  if(e.target.matches("input,select,textarea"))return;
+  if(e.key==="ArrowRight")go(EX.cur+1); else if(e.key==="ArrowLeft")go(EX.cur-1);
+  else{const q=QBY[EX.qs[EX.cur]];const i="abcdef".indexOf(e.key.toLowerCase());
+    if(e.key.length===1&&i>=0&&q.o&&i<q.o.length&&!q.type){EX.ans[q.id]=i;renderQ();}}
+});
+
+show("home");
+</script>
+
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
